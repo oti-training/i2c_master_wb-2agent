@@ -1,9 +1,9 @@
 `ifndef AGENT
 `define AGENT
 
-// `include "driver.svh"
-// `include "monitor.svh"
-// `include "sequence.svh"
+`include "driver.svh"
+`include "monitor.svh"
+`include "sequence.svh"
 
 class wb_master_agent extends uvm_agent;
   

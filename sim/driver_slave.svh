@@ -1,8 +1,7 @@
 `ifndef DRIVER_SLAVE
 `define DRIVER_SLAVE
 
-// `include "sequence_slave.svh"
-// `include "config.svh"
+`include "sequence_slave.svh"
 
 class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
 
@@ -23,12 +22,10 @@ class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
     // set driver-DUT interface
     virtual top_interface.driver_slave top_vinterface;
     monitor_sequence_item monitor_item;
-    wb_master_test_config config_obj;
     function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
-            `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
+        if (!uvm_config_db #(virtual top_interface)::get(this, "", "top_vinterface", top_vinterface)) begin
+            `uvm_error("", "uvm_config_db::driver_slave.svh get failed on BUILD_PHASE")
         end
-        top_vinterface = config_obj.top_vinterface;
         ap = new("ap", this);
     endfunction
 

@@ -1,9 +1,9 @@
 `ifndef ENVIRONMENT
 `define ENVIRONMENT
 
-// `include "agent.svh"
-// `include "agent_slave.svh"
-// `include "scoreboard.svh"
+`include "agent.svh"
+`include "agent_slave.svh"
+`include "scoreboard.svh"
 
 class wb_master_environment extends uvm_env;
 

@@ -1,7 +1,7 @@
 `ifndef AGENT_SLAVE
 `define AGENT_SLAVE
 
-// `include "driver_slave.svh"
+`include "driver_slave.svh"
 
 class wb_master_agent_slave extends uvm_agent;
   

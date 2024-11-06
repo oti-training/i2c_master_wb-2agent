@@ -1,8 +1,7 @@
 `ifndef DRIVER
 `define DRIVER
 
-// `include "sequence.svh"
-// `include "config.svh"
+`include "sequence.svh"
 
 class wb_master_driver extends uvm_driver#(sequence_item);
 
@@ -16,12 +15,10 @@ class wb_master_driver extends uvm_driver#(sequence_item);
 
     // set driver-DUT interface
     virtual top_interface.driver top_vinterface;
-    wb_master_test_config config_obj;
     function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
+        if (!uvm_config_db #(virtual top_interface)::get(this, "", "top_vinterface", top_vinterface)) begin
             `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
         end
-        top_vinterface = config_obj.top_vinterface;
     endfunction
 
     /** the read sequence is constructed of 3 procedures:
@@ -58,9 +55,6 @@ class wb_master_driver extends uvm_driver#(sequence_item);
             CAB_I <- #(Thold) 1'b0
     **/
 
-    /** Difference with WRITE OPERATION: WE_I must be 1'b1 (and, that's all, actually :D)
-    **/
-
     integer wait_retry;
     // define driver behavior
     task run_phase (uvm_phase phase);
@@ -87,6 +81,7 @@ class wb_master_driver extends uvm_driver#(sequence_item);
 
                 // write cycle
                 wait_retry = 20;
+                top_vinterface.wbs_sel_i = #(7) 2'b11;
                 top_vinterface.wbs_adr_i = #(7) req.addr;
                 top_vinterface.wbs_dat_i = #(7) req.data;
                 top_vinterface.wbs_stb_i = #(7) 1'b1;
@@ -96,10 +91,9 @@ class wb_master_driver extends uvm_driver#(sequence_item);
                     @(posedge top_vinterface.clk) ;
                     wait_retry = wait_retry - 1 ;
                 end
-
                 // fetch data during read mode
                 if (req.rw == 0) req.data = top_vinterface.wbs_dat_o;
-
+                
                 top_vinterface.wbs_adr_i = #(1) 3'hx;
                 top_vinterface.wbs_dat_i = #(1) 8'hxx;
                 top_vinterface.wbs_stb_i = #(1) 1'b0;
@@ -108,10 +102,11 @@ class wb_master_driver extends uvm_driver#(sequence_item);
                 if (wait_retry == 0) begin
                     `uvm_warning("DRIVER", "Handshake no response") 
                 end
-
+                
                 // end cycle
                 top_vinterface.wbs_cyc_i = #(1) 1'b0;
                 top_vinterface.wbs_we_i = #(1) 1'b0;
+                top_vinterface.wbs_sel_i = #(1) 2'b00;
 
             @top_vinterface.clk;
             // ****************************************************************

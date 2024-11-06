@@ -9,7 +9,7 @@ module wb_master_testbench;
   top_interface top_interface_inst();
   
   // Instantiate the DUT and connect it to the interface
-  i2c_master_wbs_8_interfaced dut(.top_if(top_interface_inst));
+  i2c_master_wbs_16_interfaced dut(.top_if(top_interface_inst));
 
   // Clock and reset control
   initial begin

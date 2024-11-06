@@ -1,8 +1,6 @@
 `ifndef MONITOR
 `define MONITOR
 
-// `include "config.svh"
-
 class monitor_sequence_item extends uvm_sequence_item;
 
     bit   [7:0]  addr;
@@ -35,26 +33,25 @@ class wb_master_monitor extends uvm_monitor;
     // set driver-DUT interface
     virtual top_interface top_vinterface;
     monitor_sequence_item monitor_item;
-    wb_master_test_config config_obj;
-    function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
+    function void build_phase(uvm_phase phase);
+        super.build_phase(phase);
+        if (!uvm_config_db #(virtual top_interface)::get(this, "", "top_vinterface", top_vinterface)) begin
             `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
         end
-        top_vinterface = config_obj.top_vinterface;
         ap = new("ap", this);
     endfunction
 
     // wishbone command decoder
     bit [6:0] i2c_devaddr;
     bit [7:0] i2c_regaddr;
-    bit [7:0] i2c_data;
+    bit [15:0] i2c_data;
     bit       i2c_rw;
     bit       i2c_stop = 0;
     bit       i2c_increment = 0, i2c_prev_increment = 0;
     int       increment_val = 0;
 
     bit [6:0] temp_devaddr;
-    bit [7:0] temp_data;
+    bit [15:0] temp_data;
     // bit       temp_rw;
     typedef enum {IDLE, RW_WAIT, READ, WRITE} state_t;
     state_t state = IDLE;
@@ -74,7 +71,7 @@ class wb_master_monitor extends uvm_monitor;
     // 2. WB read needs to be delayed until read data is set from I2C, same reason as (1)
     // 3. Don't forget to implement address increment (check)
         input bit [2:0] wb_addr;
-        input bit [7:0] wb_data;
+        input bit [15:0] wb_data;
         input bit       wb_rw;
         begin
             // `uvm_info("MONITOR TASK LOG", $sformatf("data:0x%2h, addr:0x%2h, wb_rw:0x%1h", wb_data, wb_addr, wb_rw), UVM_MEDIUM);
@@ -92,16 +89,14 @@ class wb_master_monitor extends uvm_monitor;
                             // device address reg
                             2: begin
                                 temp_devaddr = wb_data[6:0];
-                            end
-                            // command reg
-                            3: begin
-                                if (wb_data[2] ^ wb_data[1]) begin // write ^ read
-                                    if (wb_data[2]) begin // write
+                            
+                                if (wb_data[10] ^ wb_data[9]) begin // write ^ read
+                                    if (wb_data[10]) begin // write
                                         i2c_devaddr = temp_devaddr;
                                         i2c_regaddr = temp_data;
 
                                         if (i2c_devaddr == 7'h6) begin
-                                            if (wb_data[4]) begin// stop
+                                            if (wb_data[12]) begin// stop
                                                 state = IDLE;
                                             end
                                             else begin
@@ -110,12 +105,12 @@ class wb_master_monitor extends uvm_monitor;
                                             end
                                         end
                                     end
-                                    else if (wb_data[1]) begin // read
+                                    else if (wb_data[9]) begin // read
                                         i2c_devaddr = temp_devaddr;
                                         i2c_regaddr = temp_data;
 
                                         if (i2c_devaddr == 7'h6) begin
-                                            if (wb_data[4]) begin
+                                            if (wb_data[12]) begin
                                                 i2c_stop = 1;
                                                 state = READ;
                                             end
@@ -142,11 +137,9 @@ class wb_master_monitor extends uvm_monitor;
                             // device address reg
                             2: begin
                                 temp_devaddr = wb_data[6:0];
-                            end
-                            // command reg
-                            3: begin
-                                if (wb_data[2] ^ wb_data[1]) begin // only either read or write command
-                                    if (wb_data[0] && wb_data[1]) begin
+                            
+                                if (wb_data[10] ^ wb_data[9]) begin // only either read or write command
+                                    if (wb_data[8] && wb_data[9]) begin
                                         // next is read
                                         if (temp_devaddr!=i2c_devaddr) begin
                                             i2c_devaddr = temp_devaddr;
@@ -161,13 +154,13 @@ class wb_master_monitor extends uvm_monitor;
                                             i2c_increment = 1;
                                             // communicate_to_sb;
 
-                                            if (wb_data[4]) state = IDLE;
+                                            if (wb_data[12]) state = IDLE;
                                             else begin
                                                 state = READ;
                                             end
                                         end
                                     end
-                                    else if (wb_data[2]) begin
+                                    else if (wb_data[10]) begin
                                         // next is write
                                         if (temp_devaddr!=i2c_devaddr) begin
                                             i2c_devaddr = temp_devaddr;
@@ -182,7 +175,7 @@ class wb_master_monitor extends uvm_monitor;
                                             i2c_increment = 1;
                                             communicate_to_sb;
 
-                                            if (wb_data[4]) state = IDLE;
+                                            if (wb_data[12]) state = IDLE;
                                             else begin
                                                 state = WRITE;
                                             end
@@ -211,32 +204,30 @@ class wb_master_monitor extends uvm_monitor;
                             // device address reg
                             2: begin
                                 temp_devaddr = wb_data[6:0];
-                            end
-                            // command reg
-                            3: begin
-                                if (wb_data[4]) i2c_stop = 1;
-                                if (wb_data[2] ^ wb_data[1]) begin // write ^ read
+                            
+                                if (wb_data[12]) i2c_stop = 1;
+                                if (wb_data[10] ^ wb_data[9]) begin // write ^ read
                                     if (temp_devaddr!=i2c_devaddr) begin
                                         i2c_devaddr = temp_devaddr;
                                         i2c_regaddr = temp_data;
                                         state = IDLE;
                                     end
-                                    else if (wb_data[0]) begin // start
-                                        if (wb_data[1]) begin // read
+                                    else if (wb_data[8]) begin // start
+                                        if (wb_data[9]) begin // read
                                             i2c_data = temp_data;
 
                                             // log read
                                             i2c_increment = 1;
                                             // communicate_to_sb;
                                         end
-                                        else if (wb_data[2]) begin //write
+                                        else if (wb_data[10]) begin //write
                                             i2c_regaddr = temp_data;
                                             state = RW_WAIT;
                                             i2c_increment = 0;
                                         end
                                     end
                                     else begin // no start
-                                        if (wb_data[1]) begin // read
+                                        if (wb_data[9]) begin // read
                                             i2c_data = temp_data;
 
                                             // the address should be incrementing
@@ -245,7 +236,7 @@ class wb_master_monitor extends uvm_monitor;
                                             // log read
                                             // communicate_to_sb;
                                         end
-                                        else if (wb_data[2]) begin //write
+                                        else if (wb_data[10]) begin //write
                                             i2c_regaddr = temp_data;
                                             state = RW_WAIT;
                                             i2c_increment = 0;
@@ -271,18 +262,16 @@ class wb_master_monitor extends uvm_monitor;
                             2: begin
                                 temp_devaddr = wb_data[6:0];
                                 // i2c_increment = i2c_increment;
-                            end
-                            // command reg
-                            3: begin
-                                if (wb_data[4]) i2c_stop = 1;
-                                if (wb_data[2] ^ wb_data[1]) begin // write ^ read
+                            
+                                if (wb_data[12]) i2c_stop = 1;
+                                if (wb_data[10] ^ wb_data[9]) begin // write ^ read
                                     if (temp_devaddr!=i2c_devaddr) begin
                                         i2c_devaddr = temp_devaddr;
                                         i2c_regaddr = temp_data;
                                         state = IDLE;
                                     end
-                                    else if (wb_data[0]) begin // start
-                                        if (wb_data[2]) begin // write
+                                    else if (wb_data[8]) begin // start
+                                        if (wb_data[10]) begin // write
                                             i2c_devaddr = temp_devaddr;
                                             i2c_data = temp_data;
                                             i2c_increment = 0;
@@ -292,14 +281,14 @@ class wb_master_monitor extends uvm_monitor;
                                             // // log write
                                             // communicate_to_sb;
                                         end
-                                        else if (wb_data[1]) begin // read
+                                        else if (wb_data[9]) begin // read
                                             i2c_regaddr = temp_data;
                                             state = READ;
                                             i2c_increment = 0;
                                         end
                                     end
                                     else begin // no start
-                                        if (wb_data[2]) begin // write
+                                        if (wb_data[10]) begin // write
                                             i2c_data = temp_data;
 
                                             // the address should be incrementing
@@ -308,7 +297,7 @@ class wb_master_monitor extends uvm_monitor;
                                             // log write
                                             communicate_to_sb;
                                         end
-                                        else if (wb_data[1]) begin // read
+                                        else if (wb_data[9]) begin // read
                                             i2c_regaddr = temp_data;
                                             state = READ;
                                             i2c_increment = 0;
@@ -341,7 +330,7 @@ class wb_master_monitor extends uvm_monitor;
     // monitor behavior
     task run_phase(uvm_phase phase);
         bit [2:0] wb_addr;
-        bit [7:0] wb_data;
+        bit [15:0] wb_data;
         bit       wb_rw;
         bit       txn_valid;
         int       counter;
