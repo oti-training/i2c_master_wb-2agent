@@ -1,7 +1,7 @@
 /**
  * Top Level DUT's Interface
  */
-interface top_interface #(int size = 16);
+interface top_interface #(int size = 16) (top_interface top_if);
 
 // Generic signals
 logic        clk;

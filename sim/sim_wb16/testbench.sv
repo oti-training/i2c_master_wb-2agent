@@ -1,5 +1,3 @@
-`define WBS_16
-
 `include "uvm_macros.svh"
 `include "packages.svh"
 
