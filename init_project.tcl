@@ -13,17 +13,13 @@ if {[file exists $project_dir]} {
 
 # Create project
 set project_name "oti-i2c-bridge-project"
-create_project ${project_name} "${repo_path}/project" -part xc7vx485tffg1157-1
+create_project ${project_name} "${repo_path}/project"
 
 # Add RTL files
 set rtl_files [list \
-    "[file normalize "${repo_path}/rtl/i2c_master_axil.v"]" \
-    "[file normalize "${repo_path}/rtl/i2c_master.v"]" \
-    "[file normalize "${repo_path}/rtl/axis_fifo.v"]" \
-    "[file normalize "${repo_path}/rtl/i2c_master_wbs_8.v"]" \
-    "[file normalize "${repo_path}/rtl/i2c_master_wbs_16.v"]" \
+    "[file normalize "${repo_path}/rtl/"]" \
 ]
-add_files -norecurse $rtl_files
+add_files -scan_for_includes $rtl_files
 update_compile_order -fileset sources_1
 
 # Create and setup AXIL simulation fileset
