@@ -4,13 +4,13 @@
 // `include "sequence_slave.svh"
 // `include "config.svh"
 
-class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
+class i2c_slave_driver extends uvm_driver#(sequence_item_slave);
 
     /*************************
     * Component Initialization
     **************************/
     // register object to UVM Factory
-    `uvm_component_utils(wb_master_driver_slave);
+    `uvm_component_utils(i2c_slave_driver);
 
     // constructor
     function new (string name, uvm_component parent);
@@ -18,18 +18,18 @@ class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
     endfunction
 
     // analysis port
-    uvm_analysis_port #(monitor_sequence_item) ap;
+    uvm_analysis_port #(sequence_item_base) driver_slave_ap;
 
     // set driver-DUT interface
     virtual i2c_interface vif;
-    monitor_sequence_item monitor_item;
-    wb_master_test_config config_obj;
+    sequence_item_slave i2c_tlm_obj;
+    wb8_i2c_test_config config_obj;
     function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
+        if (!uvm_config_db #(wb8_i2c_test_config)::get(this, "", "wb8_i2c_test_config", config_obj)) begin
             `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
         end
         vif = config_obj.i2c_vif.driver;
-        ap = new("ap", this);
+        driver_slave_ap = new("driver_slave_ap", this);
     endfunction
 
     /*************************
@@ -62,7 +62,7 @@ class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
     // TLM packet
     sequence_item_slave req;
     sequence_item_slave rsp;
-    bit [6:0] reg_addr;
+    bit [7:0] reg_addr;
     bit [7:0] reg_data;
     bit       reg_rw;
 
@@ -81,12 +81,12 @@ class wb_master_driver_slave extends uvm_driver#(sequence_item_slave);
             seq_item_port.item_done();
         end
 
-        // also send data to the scoreboard when the transaction completes
-        monitor_item = monitor_sequence_item::type_id::create("i2c_observer");
-        monitor_item.data = reg_data;
-        monitor_item.addr = reg_addr;
-        monitor_item.rw = reg_rw;
-        ap.write(monitor_item);
+        // also send data to the scoreboard and coverage collector when the transaction completes
+        i2c_tlm_obj = sequence_item_slave::type_id::create("i2c_observer");
+        i2c_tlm_obj.data = reg_data;
+        i2c_tlm_obj.addr = reg_addr;
+        i2c_tlm_obj.rw = reg_rw;
+        driver_slave_ap.write(i2c_tlm_obj);
 
     endtask
 

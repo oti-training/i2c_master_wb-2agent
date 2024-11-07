@@ -1,9 +1,6 @@
 `ifndef DRIVER
 `define DRIVER
 
-// `include "sequence.svh"
-// `include "config.svh"
-
 class wb_master_driver extends uvm_driver#(sequence_item);
 
     // register object to UVM Factory
@@ -15,13 +12,13 @@ class wb_master_driver extends uvm_driver#(sequence_item);
     endfunction
 
     // set driver-DUT interface
-    virtual top_interface.driver top_vinterface;
-    wb_master_test_config config_obj;
+    virtual wb8_interface.driver wb8_vif;
+    wb8_i2c_test_config config_obj;
     function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
+        if (!uvm_config_db #(wb8_i2c_test_config)::get(this, "", "wb8_i2c_test_config", config_obj)) begin
             `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
         end
-        top_vinterface = config_obj.top_vinterface;
+        wb8_vif = config_obj.wb8_vif;
     endfunction
 
     /** the read sequence is constructed of 3 procedures:
@@ -66,43 +63,43 @@ class wb_master_driver extends uvm_driver#(sequence_item);
     task run_phase (uvm_phase phase);
         
         // reset routine
-        top_vinterface.rst = 1;
-        @top_vinterface.clk;
-        top_vinterface.rst = 0; 
-        @top_vinterface.clk;
+        wb8_vif.rst = 1;
+        @wb8_vif.clk;
+        wb8_vif.rst = 0; 
+        @wb8_vif.clk;
 
         // fetch test sequences, pass it to the DUT as signals
         forever begin
-            @(posedge top_vinterface.clk);
+            @(posedge wb8_vif.clk);
             seq_item_port.get_next_item(req);
             //****************** DRIVE THE INTERFACE ********************/
             //----------- WRITE ROUTINE -----------//
-            @top_vinterface.clk;
+            @wb8_vif.clk;
 
                 // start cycle
-                top_vinterface.wbs_cyc_i = #(7) 1'b1;
-                top_vinterface.wbs_we_i = #(7) req.rw;
+                wb8_vif.wbs_cyc_i = #(7) 1'b1;
+                wb8_vif.wbs_we_i = #(7) req.rw;
 
-            @top_vinterface.clk;
+            @wb8_vif.clk;
 
                 // write cycle
                 wait_retry = 20;
-                top_vinterface.wbs_adr_i = #(7) req.addr;
-                top_vinterface.wbs_dat_i = #(7) req.data;
-                top_vinterface.wbs_stb_i = #(7) 1'b1;
-                @top_vinterface.clk;
-                while ( (wait_retry > 0) && ~(top_vinterface.wbs_ack_o) )
+                wb8_vif.wbs_adr_i = #(7) req.addr;
+                wb8_vif.wbs_dat_i = #(7) req.data;
+                wb8_vif.wbs_stb_i = #(7) 1'b1;
+                @wb8_vif.clk;
+                while ( (wait_retry > 0) && ~(wb8_vif.wbs_ack_o) )
                 begin
-                    @(posedge top_vinterface.clk) ;
+                    @(posedge wb8_vif.clk) ;
                     wait_retry = wait_retry - 1 ;
                 end
 
                 // fetch data during read mode
-                if (req.rw == 0) req.data = top_vinterface.wbs_dat_o;
+                if (req.rw == 0) req.data = wb8_vif.wbs_dat_o;
 
-                top_vinterface.wbs_adr_i = #(1) 3'hx;
-                top_vinterface.wbs_dat_i = #(1) 8'hxx;
-                top_vinterface.wbs_stb_i = #(1) 1'b0;
+                wb8_vif.wbs_adr_i = #(1) 3'hx;
+                wb8_vif.wbs_dat_i = #(1) 8'hxx;
+                wb8_vif.wbs_stb_i = #(1) 1'b0;
 
                 // check response validity
                 if (wait_retry == 0) begin
@@ -110,10 +107,10 @@ class wb_master_driver extends uvm_driver#(sequence_item);
                 end
 
                 // end cycle
-                top_vinterface.wbs_cyc_i = #(1) 1'b0;
-                top_vinterface.wbs_we_i = #(1) 1'b0;
+                wb8_vif.wbs_cyc_i = #(1) 1'b0;
+                wb8_vif.wbs_we_i = #(1) 1'b0;
 
-            @top_vinterface.clk;
+            @wb8_vif.clk;
             // ****************************************************************
             seq_item_port.item_done();
         end

@@ -1,24 +1,6 @@
 `ifndef MONITOR
 `define MONITOR
 
-// `include "config.svh"
-
-class monitor_sequence_item extends uvm_sequence_item;
-
-    bit   [7:0]  addr;
-    bit   [7:0]  data;
-    bit          rw;
-
-    // register object to UVM Factory
-    `uvm_object_utils(monitor_sequence_item);
-
-    // constructor
-    function new (string name="");
-        super.new(name);
-    endfunction
-
-endclass
-
 class wb_master_monitor extends uvm_monitor;
   
     // register agent as component to UVM Factory
@@ -30,18 +12,21 @@ class wb_master_monitor extends uvm_monitor;
     endfunction
 
     // analysis port
-    uvm_analysis_port #(monitor_sequence_item) ap;
+    uvm_analysis_port #(monitor_sequence_item) monitor_to_scoreboard_ap;
+    uvm_analysis_port #(sequence_item_base) monitor_to_coverage_ap;
 
     // set driver-DUT interface
-    virtual top_interface top_vinterface;
+    virtual wb8_interface wb8_vif;
     monitor_sequence_item monitor_item;
-    wb_master_test_config config_obj;
+    sequence_item wb_tlm_obj;
+    wb8_i2c_test_config config_obj;
     function void build_phase (uvm_phase phase);
-        if (!uvm_config_db #(wb_master_test_config)::get(this, "", "wb_master_config", config_obj)) begin
+        if (!uvm_config_db #(wb8_i2c_test_config)::get(this, "", "wb8_i2c_test_config", config_obj)) begin
             `uvm_error("", "uvm_config_db::driver.svh get failed on BUILD_PHASE")
         end
-        top_vinterface = config_obj.top_vinterface;
-        ap = new("ap", this);
+        wb8_vif = config_obj.wb8_vif;
+        monitor_to_scoreboard_ap = new("monitor_to_scoreboard_ap", this);
+        monitor_to_coverage_ap = new("monitor_to_coverage_ap", this);
     endfunction
 
     // wishbone command decoder
@@ -61,18 +46,18 @@ class wb_master_monitor extends uvm_monitor;
 
     task communicate_to_sb;
         increment_val = (i2c_increment & i2c_prev_increment) ? increment_val + 1 : 0;
-        monitor_item = monitor_sequence_item::type_id::create("monlog");
+        monitor_item = monitor_sequence_item::type_id::create("monitor_to_scoreboard_ap");
         monitor_item.addr = i2c_regaddr + increment_val;
         monitor_item.data = i2c_data;
         monitor_item.rw = i2c_rw;
-        ap.write(monitor_item);
+        monitor_to_scoreboard_ap.write(monitor_item);
     endtask
 
     task wb_i2c_decode;
     // TO BE DONE!!!
-    // 1. Be aware that WB finishes first, way before I2C due to FIFO implementation, so don't take read data from WB
-    // 2. WB read needs to be delayed until read data is set from I2C, same reason as (1)
-    // 3. Don't forget to implement address increment (check)
+    // 1. Be aware that WB finishes first, way before I2C due to FIFO implementation, so don't take read data from WB (check)
+    // 2. WB read needs to be delayed until read data is set from I2C, same reason as (1) (check)
+    // 3. Don't forget to implement address increment (check, needs to be reviewed)
         input bit [2:0] wb_addr;
         input bit [7:0] wb_data;
         input bit       wb_rw;
@@ -352,21 +337,21 @@ class wb_master_monitor extends uvm_monitor;
             // initialize transaction as invalid
             txn_valid = 0;
             // wait for start cycle
-            wait(top_vinterface.wbs_cyc_i);
+            wait(wb8_vif.wbs_cyc_i);
             // get ack or terminate if nack
             for (counter=0; counter<20; counter=counter+1) begin
                 // wishbone is acknowledged
-                if (top_vinterface.wbs_ack_o) begin
+                if (wb8_vif.wbs_ack_o) begin
                     txn_valid = 1;
                     // check operation mode
-                    #1; wb_rw = top_vinterface.wbs_we_i;
+                    #1; wb_rw = wb8_vif.wbs_we_i;
                     // retrieve data
-                    wb_addr = top_vinterface.wbs_adr_i;
-                    if (wb_rw == 0) wb_data = top_vinterface.wbs_dat_o; /*************change later***********/
-                    else wb_data = top_vinterface.wbs_dat_i;
+                    wb_addr = wb8_vif.wbs_adr_i;
+                    if (wb_rw == 0) wb_data = wb8_vif.wbs_dat_o;
+                    else wb_data = wb8_vif.wbs_dat_i;
                     break; // break from the ack wait
                 end
-                @(top_vinterface.clk);
+                @(wb8_vif.clk);
             end
 
             // only if we get a valid data that was acknowledged
@@ -374,18 +359,27 @@ class wb_master_monitor extends uvm_monitor;
                 // wait until cycle done
                 for (counter=0; counter<20; counter=counter+1) begin
                     // transfer cycle is done
-                    if (top_vinterface.wbs_cyc_i==0) begin
+                    if (wb8_vif.wbs_cyc_i==0) begin
                         txn_valid = 1;
                         break;
                     end
                     // transfer cycle not done, wait for another cycle
                     txn_valid = 0;
-                    @(top_vinterface.clk);
+                    @(wb8_vif.clk);
                 end
             end
 
             // decode the process based on the data
-            if (txn_valid) wb_i2c_decode (wb_addr, wb_data, wb_rw);
+            if (txn_valid) begin
+                wb_i2c_decode (wb_addr, wb_data, wb_rw);
+
+                // also send the data to coverage collector
+                wb_tlm_obj = sequence_item::type_id::create("monitor_to_coverage_ap");
+                wb_tlm_obj.addr = wb_addr;
+                wb_tlm_obj.data = wb_data;
+                wb_tlm_obj.rw = wb_rw;
+                monitor_to_coverage_ap.write(wb_tlm_obj);
+            end
         end
     endtask
 
