@@ -3,10 +3,10 @@
 
 // `include "driver_slave.svh"
 
-class wb_master_agent_slave extends uvm_agent;
+class i2c_slave_agent extends uvm_agent;
   
     // register agent as component to UVM Factory
-    `uvm_component_utils(wb_master_agent_slave);
+    `uvm_component_utils(i2c_slave_agent);
 
     // default constructor
     function new (string name, uvm_component parent);
@@ -14,27 +14,27 @@ class wb_master_agent_slave extends uvm_agent;
     endfunction;
 
     // initialize handlers for agent components
-    wb_master_driver_slave wb_master_driver_slave_handler;
-    sequencer_slave sequencer_slave_handler;
+    i2c_slave_driver i2c_slave_driver_handler;
+    i2c_slave_sequencer i2c_slave_sequencer_handler;
 
     // create components
     function void build_phase(uvm_phase phase);
-        wb_master_driver_slave_handler = wb_master_driver_slave::type_id::create("wb_master_driver_slave_handler", this);
-        sequencer_slave_handler = sequencer_slave::type_id::create("sequencer_slave_handler", this);
+        i2c_slave_driver_handler = i2c_slave_driver::type_id::create("i2c_slave_driver_handler", this);
+        i2c_slave_sequencer_handler = i2c_slave_sequencer::type_id::create("i2c_slave_sequencer_handler", this);
     endfunction
 
     // connect components
     function void connect_phase(uvm_phase phase);
-        wb_master_driver_slave_handler.seq_item_port.connect(sequencer_slave_handler.seq_item_export);
+        i2c_slave_driver_handler.seq_item_port.connect(i2c_slave_sequencer_handler.seq_item_export);
     endfunction
   
     // run phase task
     task run_phase (uvm_phase phase);
         // phase.raise_objection(this);
         begin
-            sequence_slave sequence_slave_handler;
-            sequence_slave_handler = sequence_slave::type_id::create("seq_slave");
-            sequence_slave_handler.start(sequencer_slave_handler);
+            i2c_slave_sequence i2c_slave_sequence_handler;
+            i2c_slave_sequence_handler = i2c_slave_sequence::type_id::create("i2c_slave_sequence_handler");
+            i2c_slave_sequence_handler.start(i2c_slave_sequencer_handler);
         end
         // phase.drop_objection(this);
     endtask

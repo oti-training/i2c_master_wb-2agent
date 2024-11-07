@@ -1,3 +1,25 @@
+/*
+* File: axil_monitor.sv
+*
+* This file defines the AXI-Lite monitor component for the verification environment.
+* The monitor observes transactions on the AXI-Lite interface and broadcasts them
+* to other components in the testbench via analysis ports.
+*
+* Key Features:
+* - Implements the UVM monitor class for AXI-Lite protocol.
+* - Captures both read and write transactions on the AXI-Lite bus.
+* - Uses a virtual interface to access DUT signals.
+* - Broadcasts observed transactions through an analysis port.
+*
+* TODO:
+* - Implement configurable verbosity levels for transaction reporting.
+* - Add checks for AXI-Lite protocol compliance (e.g., handshake timing).
+* - Consider separating read and write transaction monitoring for better modularity.
+*
+* NOTE: This implementation could benefit from some improvements:
+* - Error handling and corner cases could be more robust.
+* - Consider adding coverage collection directly in the monitor.
+*/
 `ifndef AXIL_MONITOR
 `define AXIL_MONITOR
 
@@ -63,6 +85,17 @@ class axil_monitor extends uvm_monitor;
         join_any
         disable fork;
     endtask
+    // TODO: Add coverage collection method
+    // function void collect_coverage(axil_seq_item item);
+    //     // Implement coverage collection logic here
+    // endfunction
+
+    // TODO: Add method to check for protocol violations
+    // function void check_protocol_compliance(axil_seq_item item);
+    //     // Implement protocol checking logic here
+    // endfunction
 endclass
 
 `endif
+// NOTE: Consider adding assertions to verify AXI-Lite protocol rules
+// within the monitor or in a separate checker module.

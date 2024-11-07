@@ -1,3 +1,18 @@
+/* 
+* File: scoreboard.sv
+*
+* This file implements the scoreboard for checking AXI-Lite and I2C transactions.
+*
+* TODO:
+* - Implement more sophisticated checking for multi-byte transfers
+* - Add checks for I2C timing compliance
+* - Consider using a more structured approach for expected transaction storage
+*
+* COMPLIANCE ISSUES:
+* - The fixed slave address (7'h50) should be configurable
+* - Error messages should use UVM macros consistently
+* - Consider using separate classes for AXI and I2C transaction storage
+*/
 `ifndef SCOREBOARD
 `define SCOREBOARD
 
@@ -47,6 +62,7 @@ class scoreboard extends uvm_scoreboard;
                 
                 `uvm_info("SCBD", $sformatf("Queued expected I2C read transaction: addr=%h read=%b", 
                           expected.addr, expected.read), UVM_MEDIUM)
+            // TODO: Handle other register writes (CMD_REG, etc.)
             end
         end
         expected_seq.push_back(item.data);

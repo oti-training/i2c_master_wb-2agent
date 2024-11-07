@@ -1,7 +1,7 @@
 /**
  * Top Level DUT's Interface
  */
-interface top_interface(input logic clk);
+interface wb8_interface(input logic clk);
 
 // Generic signals
 logic        rst;
@@ -106,7 +106,7 @@ endinterface
 /**
  * Interfaced Top Level DUT
  */
-module i2c_master_wbs_8_interfaced (top_interface top_if, i2c_interface i2c_if);
+module i2c_master_wbs_8_interfaced (wb8_interface top_if, i2c_interface i2c_if);
 
 // copied this from the documentation
 assign scl_dut_i = scl_dut_o & scl_tb_o;

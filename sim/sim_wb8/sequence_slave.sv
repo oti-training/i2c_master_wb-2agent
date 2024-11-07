@@ -1,27 +1,10 @@
 `ifndef SEQUENCER_SLAVE
 `define SEQUENCER_SLAVE
 
-class sequence_item_slave extends uvm_sequence_item;
-
-    // driving signals
-    logic   [7:0]  addr;
-    logic   [7:0]  data;
-    logic          rw; // r:0, w:1
+class i2c_slave_sequence extends uvm_sequence #(sequence_item_slave);
 
     // register object to UVM Factory
-    `uvm_object_utils(sequence_item_slave);
-
-    // constructor
-    function new (string name="");
-        super.new(name);
-    endfunction
-
-endclass
-
-class sequence_slave extends uvm_sequence #(sequence_item_slave);
-
-    // register object to UVM Factory
-    `uvm_object_utils(sequence_slave);
+    `uvm_object_utils(i2c_slave_sequence);
 
     // constructor
     function new (string name="");
@@ -62,10 +45,10 @@ class sequence_slave extends uvm_sequence #(sequence_item_slave);
 
 endclass
 
-class sequencer_slave extends uvm_sequencer #(sequence_item_slave);
+class i2c_slave_sequencer extends uvm_sequencer #(sequence_item_slave);
 
     // register sequence to UVM factory
-    `uvm_component_utils(sequencer_slave)
+    `uvm_component_utils(i2c_slave_sequencer)
 
     // create the sequence constructor default
     function new (string name, uvm_component parent);

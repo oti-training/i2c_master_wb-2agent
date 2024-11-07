@@ -1,55 +1,6 @@
 `ifndef SEQUENCER
 `define SEQUENCER
 
-// `define USE_MULTI_TRANSFER
-// `include "config.svh"
-
-/******************************
- * UVM SEQUENCE ITEM
- ******************************/
-class sequence_item extends uvm_sequence_item;
-
-    // driving signals
-    rand logic   [2:0]  addr;
-    rand logic   [7:0]  data;
-    rand logic          rw; // r:0, w:1
-
-    // register object to UVM Factory
-    `uvm_object_utils(sequence_item);
-
-    // constraint command_range {
-    //     if (addr == 3'h3) {
-    //         ((data & 8'b11011000) == 0) && ((data >> 1) & 2'b11 != 2'b11);
-    //     }
-    // }
-
-    // constraint address_range { 
-    //     addr dist { 2:=3, 3:=20, 4:=10 }; 
-    // }
-
-    // constraint address_range {
-    //     addr inside {3,4};
-    // }
-
-    constraint address_range {
-        addr == 4;
-    }
-
-    constraint command_range {
-        rw == 1;
-    }
-
-    constraint data_range {
-        data < 8'h10;
-    }
-
-    // constructor
-    function new (string name="");
-        super.new(name);
-    endfunction
-
-endclass
-
 /******************************
  * UVM SEQUENCE API
  ******************************/
@@ -332,10 +283,10 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
 
     // internal properties
 
-    bit [6:0] device_addr;
-    bit [7:0] reg_addr;
-    logic [7:0] data [$];  
-    int len;
+    bit     [6:0]   device_addr;
+    bit     [7:0]   reg_addr;
+    logic   [7:0]   data [$];  
+    int             len;
     
     function void set_property (logic [6:0] device_addr, logic [7:0] reg_addr, logic [7:0] data [$], int len);
         this.device_addr = device_addr;
@@ -393,7 +344,6 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
 
     // encapsulate set_property and start task
     // not directly implemented in the body task due to input arguments
-
     task write_i2c (logic [6:0] device_addr, logic [7:0] reg_addr, logic [7:0] data [$], int len=1, uvm_sequencer_base seqr);
         this.set_property(device_addr, reg_addr, data, len);
         this.start(seqr);
@@ -436,7 +386,7 @@ class wb_master_vsequence extends uvm_sequence #(sequence_item);
     random_sequence_worker random_sequence;
 
     // config object
-    wb_master_test_config config_obj;
+    wb8_i2c_test_config config_obj;
 
     // run the sequence
     task body;
@@ -451,7 +401,7 @@ class wb_master_vsequence extends uvm_sequence #(sequence_item);
 
         begin
             scope_name = get_full_name();
-            if (!uvm_config_db#(wb_master_test_config)::get(null, "", "wb_master_config", config_obj))
+            if (!uvm_config_db#(wb8_i2c_test_config)::get(null, "", "wb8_i2c_test_config", config_obj))
                 `uvm_error("VIRTUAL_SEQUENCE", "Config Object cannot be loaded")
             
             if (config_obj.test_type == 0) begin

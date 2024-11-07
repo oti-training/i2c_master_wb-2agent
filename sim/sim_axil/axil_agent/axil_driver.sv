@@ -1,3 +1,26 @@
+/*
+* File: axil_driver.sv
+*
+* This file contains the AXI-Lite driver class, responsible for driving transactions
+* to the DUT via the AXI-Lite interface.
+*
+* Key Features:
+* - Extends uvm_driver with axil_seq_item as the transaction type.
+* - Uses a virtual interface to drive AXI-Lite signals.
+* - Implements the UVM run_phase to continuously process and drive transactions.
+*
+* TODO:
+* 1. Implement proper reset handling in the driver.
+* 2. Add configurable delays between transactions for more realistic scenarios.
+* 3. Implement error injection capabilities for robust testing.
+*
+* Note on Compliance:
+* This implementation is functional but could be improved for better adherence 
+* to UVM best practices:
+* - Consider separating the driving logic into smaller, more focused tasks.
+* - Implement proper response handling and reporting.
+* - Add more comprehensive error checking and recovery mechanisms.
+*/
 `ifndef AXIL_DRIVER
 `define AXIL_DRIVER
 
@@ -29,6 +52,8 @@ class axil_driver extends uvm_driver #(axil_seq_item);
     endtask
 
     task drive_transaction(axil_seq_item req);
+        // TODO: Add proper reset handling here
+
         if(req.read) begin
             @(vif.driver_cb);
             vif.driver_cb.araddr <= req.addr;
@@ -63,6 +88,7 @@ class axil_driver extends uvm_driver #(axil_seq_item);
             while(!vif.driver_cb.bvalid) @(vif.driver_cb);
             vif.driver_cb.bready <= 0;
         end
+        // TODO: Add configurable delays between transactions
     endtask
 endclass
 
