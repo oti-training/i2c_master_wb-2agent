@@ -38,7 +38,7 @@ package bridge_env_pkg;
 	import axil_agent_pkg::*;
 
   // Include environment components
-  `include "scoreboard.sv"
+  `include "axil_scoreboard.sv"
   `include "axil_coverage.sv"
   `include "bridge_env.sv"
 
