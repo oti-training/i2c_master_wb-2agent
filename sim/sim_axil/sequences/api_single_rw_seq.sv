@@ -1,3 +1,28 @@
+/* 
+* File: api_single_rw_seq.sv
+* 
+* This file defines the api_single_rw_seq class, which is a UVM sequence for performing
+* single read or write operations on the AXI-Lite interface of the I2C master.
+*
+* Key Features:
+* - Extends uvm_sequence to create AXI-Lite transactions.
+* - Provides methods for configuring and executing read/write operations on specific registers.
+* - Implements helper tasks for common operations like writing command and data registers.
+*
+* TODO:
+* - Consider implementing more robust error handling and reporting.
+* - Add constraints to ensure valid address ranges and data values.
+* - Implement a response checking mechanism to verify successful transactions.
+*
+* Notes on current implementation:
+* - The use of a separate 'trans' object alongside 'req' is somewhat redundant and could be simplified.
+* - The 'configure' task takes a sequencer as an argument, which is not a common UVM practice. 
+*   Consider using the built-in `set_sequencer` method instead.
+* - The hardcoded register addresses (CMD_REG, DATA_REG, etc.) should ideally be parameterized 
+*   or defined in a central location for easier maintenance.
+* - The class could benefit from more comprehensive comments explaining the purpose and usage 
+*   of each task.
+*/
 `ifndef API_SINGLE_RW_SEQ
 `define API_SINGLE_RW_SEQ
 

@@ -1,3 +1,18 @@
+/* 
+* File: memory_slave_seq.sv
+* 
+* This file defines the memory_slave_seq class, which simulates I2C slave behavior
+* for read and write operations.
+*
+* TODO:
+* - Implement proper error handling for timeouts and unexpected responses
+* - Consider adding randomization to simulate more realistic I2C slave behavior
+* - Refactor to improve code reuse between read and write operations
+*
+* NOTE: This implementation directly accesses sequencer, which might not be the best 
+* practice for maintainability. Consider using a more standardized approach for 
+* starting sequences.
+*/
 `ifndef MEMORY_SLAVE_SEQ
 `define MEMORY_SLAVE_SEQ
 
@@ -22,6 +37,7 @@ class memory_slave_seq extends uvm_sequence #(axil_seq_item);
 		if (is_write) begin
 			`uvm_info("SEQ", $sformatf("Sending I2C write command: slave=%h reg=%h data=%h", slave_address, register_address, data), UVM_LOW)
 			
+      // TODO: Consider encapsulating this sequence of operations into a separate method
 			api_rw_seq.write_register_command(slave_address,
 				CMD_START | CMD_WR_M); // address and start
 			api_rw_seq.write_register_data(register_address, DATA_DEFAULT); // register 0
@@ -31,6 +47,7 @@ class memory_slave_seq extends uvm_sequence #(axil_seq_item);
 		else begin
 			`uvm_info("SEQ", $sformatf("Sending I2C read command: slave=%h reg=%h", slave_address, register_address), UVM_LOW);
 
+      // TODO: Implement proper error handling for timeouts
 			api_rw_seq.write_register_command(slave_address, CMD_START | CMD_WRITE | CMD_STOP);
 			api_rw_seq.write_register_data(register_address, DATA_LAST); // register 0
 			api_rw_seq.write_register_command(slave_address, CMD_START | CMD_READ | CMD_STOP);

@@ -1,3 +1,15 @@
+/*
+* File: axil_interface.sv
+*
+* This file defines the AXI-Lite interface used in the testbench.
+*
+* TODO:
+* - Add assertions to check AXI-Lite protocol compliance
+* - Consider adding more helper tasks for common operations
+*
+* NOTE: The current implementation is basic. It could be enhanced with
+* additional features like built-in protocol checking.
+*/
 `ifndef AXIL_INTERFACE
 `define AXIL_INTERFACE
 
@@ -37,6 +49,7 @@ interface axil_if(input logic clk, rst);
         input awready, wready, bresp, bvalid;
         input arready, rdata, rresp, rvalid;
     endclocking
+
 
     modport driver(clocking driver_cb);
     modport monitor(clocking monitor_cb);
