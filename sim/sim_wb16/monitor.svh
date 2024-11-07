@@ -44,7 +44,7 @@ class wb_master_monitor extends uvm_monitor;
     // wishbone command decoder
     bit [6:0] i2c_devaddr;
     bit [7:0] i2c_regaddr;
-    bit [15:0] i2c_data;
+    bit [7:0] i2c_data;
     bit       i2c_rw;
     bit       i2c_stop = 0;
     bit       i2c_increment = 0, i2c_prev_increment = 0;
