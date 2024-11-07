@@ -1,3 +1,6 @@
 build/
 *.json
 project/
+*.jou
+*.log
+*.str
