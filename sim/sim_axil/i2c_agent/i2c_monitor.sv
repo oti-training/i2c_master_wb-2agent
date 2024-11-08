@@ -1,3 +1,45 @@
+/*  
+* File: i2c_monitor.sv
+*
+* This file implements the I2C monitor component for the verification
+* environment.
+* The I2C monitor observes the I2C bus transactions and converts them into
+* transaction objects for analysis by other components of the testbench
+*
+* Key Features:
+* - Monitors both SCL and SDA lines of the I2C interface
+* - Detects START and STOP conditions
+* - Captures address, read/write bit, and data bytes 
+* - Packages observed transactions into i2c_trans objects
+* - Broadcasts captured transactions via analysis port
+*
+* TODO:
+* - Implement clock stretching detection and handling
+* - Add support for 10-bit addressing mode
+* - Implement multi-master arbitration monitoring
+* - Add bus busy/idle state tracking
+*
+* 
+* Notes on current implementation:
+* - The monitor assumes a standard 7-bit addressing mode
+* - It doesn't currently handle repeated START conditions
+* - There's no explicit error checking for protocol violations
+* - The monitor might miss transactions if sampling rate is not sufficient
+*  
+* Potential improvements:
+* - Use a configurable sampling rate for better accuracy
+* - Implement a state machine for more robust transaction tracking
+* - Add configuration options for different I2C modes (standard, fast, high-speed)
+* - Include more detailed reporting and error logging
+*
+* Best practice considerations:
+* - Consider breaking down long tasks into smaller, more manageable sub-tasks
+* - Add more inline comments explaining the logic of complex operations
+* - Implement proper error handling and recovery mechanisms
+* - Use `uvm_info` with different verbosity levels for debug information
+* - Consider adding coverage collection directly in the monitor
+*
+*/
 `ifndef I2C_MONITOR
 `define I2C_MONITOR
 
@@ -14,16 +56,18 @@ class i2c_monitor extends uvm_monitor;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+        // Retrieve the virtual interface from the UVM configuration database
         if(!uvm_config_db#(virtual i2c_interface)::get(this, "", "i2c_vif", vif))
             `uvm_fatal("NOVIF", "Virtual interface not found")
     endfunction
 
+    // Wait for a START condition on the I2C bus
     task wait_for_start();
         @(negedge vif.sda_i iff vif.scl_i === 1);  
         `uvm_info("I2C_MON", "START condition detected", UVM_HIGH)
     endtask
 
-    
+    // Receive a byte from the I2C bus
     task receive_byte(output bit [7:0] data);
         for(int i = 7; i >= 0; i--) begin
             @(posedge vif.scl_i);  
@@ -34,6 +78,8 @@ class i2c_monitor extends uvm_monitor;
             wait(!vif.scl_i);
         end
     endtask
+
+    // Receive a byte from the I2C bus and check for STOP condition
     task receive_byte_with_stop(output bit [7:0] data, output bit is_stop);
         is_stop = 0;
         for(int i = 7; i >= 0; i--) begin
@@ -54,6 +100,7 @@ class i2c_monitor extends uvm_monitor;
         end
     endtask
 
+    // Monitor ACK or NACK bit
     task monitor_ack();
         @(posedge vif.scl_i);
         // Check based on who's driving (master or slave)
@@ -64,6 +111,7 @@ class i2c_monitor extends uvm_monitor;
         wait(!vif.scl_i);
     endtask
 
+    // Main monitoring task
     task run_phase(uvm_phase phase);
         bit [7:0] addr_byte;
         bit [7:0] data_byte;
