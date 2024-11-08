@@ -26,10 +26,10 @@ class wb8_i2c_environment extends uvm_env;
     
     // connect phase
     function void connect_phase(uvm_phase phase);
-        wb_master_agent_handler.wb_master_monitor_handler.monitor_to_scoreboard_ap.connect(wb8_i2c_scoreboard_handler.wb_to_i2c.analysis_export);
-        i2c_slave_agent_handler.i2c_slave_driver_handler.driver_slave_ap.connect(wb8_i2c_scoreboard_handler.i2c_observer.analysis_export);
-        i2c_slave_agent_handler.i2c_slave_driver_handler.driver_slave_ap.connect(wb8_i2c_coverage_collector_handler.coverage_object_fifo.analysis_export);
-        wb_master_agent_handler.wb_master_monitor_handler.monitor_to_coverage_ap.connect(wb8_i2c_coverage_collector_handler.coverage_object_fifo.analysis_export);
+        wb_master_agent_handler.wb_master_monitor_handler.monitor_ap.connect(wb8_i2c_scoreboard_handler.wb_observer.analysis_export);
+        i2c_slave_agent_handler.i2c_slave_monitor_handler.monitor_slave_ap.connect(wb8_i2c_scoreboard_handler.i2c_observer.analysis_export);
+        i2c_slave_agent_handler.i2c_slave_monitor_handler.monitor_slave_ap.connect(wb8_i2c_coverage_collector_handler.coverage_object_fifo.analysis_export);
+        wb_master_agent_handler.wb_master_monitor_handler.monitor_ap.connect(wb8_i2c_coverage_collector_handler.coverage_object_fifo.analysis_export);
     endfunction
   
 endclass
