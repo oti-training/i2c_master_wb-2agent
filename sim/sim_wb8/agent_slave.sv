@@ -15,11 +15,13 @@ class i2c_slave_agent extends uvm_agent;
 
     // initialize handlers for agent components
     i2c_slave_driver i2c_slave_driver_handler;
+    i2c_slave_monitor i2c_slave_monitor_handler;
     i2c_slave_sequencer i2c_slave_sequencer_handler;
 
     // create components
     function void build_phase(uvm_phase phase);
         i2c_slave_driver_handler = i2c_slave_driver::type_id::create("i2c_slave_driver_handler", this);
+        i2c_slave_monitor_handler = i2c_slave_monitor::type_id::create("i2c_slave_monitor_handler", this);
         i2c_slave_sequencer_handler = i2c_slave_sequencer::type_id::create("i2c_slave_sequencer_handler", this);
     endfunction
 
