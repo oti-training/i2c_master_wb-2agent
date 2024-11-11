@@ -1,20 +1,22 @@
 `ifndef SCOREBOARD
 `define SCOREBOARD
 
-class top_scoreboard extends uvm_scoreboard;
+class wb16_i2c_scoreboard extends uvm_scoreboard;
   
   // register scoreboard to UVM factory
-  `uvm_component_utils(top_scoreboard)
+  `uvm_component_utils(wb16_i2c_scoreboard)
   
   // create analysis port FIFOs
   uvm_tlm_analysis_fifo #(monitor_sequence_item) wb_to_i2c;
-  uvm_tlm_analysis_fifo #(monitor_sequence_item) i2c_observer;
+  uvm_tlm_analysis_fifo #(sequence_item_base) i2c_observer;
 
   // monitoring objects
-  monitor_sequence_item wb_to_i2c_trans, i2c_observer_trans;
+  monitor_sequence_item wb_to_i2c_trans;
+  sequence_item_base i2c_observer_trans_primal;
+  sequence_item_base_derived i2c_observer_trans;
 
   // default constructor
-  function new (string name = "top_scoreboard", uvm_component parent);
+  function new (string name = "wb16_i2c_scoreboard", uvm_component parent);
     super.new(name, parent);
   endfunction
 
@@ -40,7 +42,8 @@ class top_scoreboard extends uvm_scoreboard;
               end
               // wait for i2c_observer object
               begin
-                  i2c_observer.get(i2c_observer_trans);
+                  i2c_observer.get(i2c_observer_trans_primal);
+                  $cast(i2c_observer_trans, i2c_observer_trans_primal);
               end
           join
 
