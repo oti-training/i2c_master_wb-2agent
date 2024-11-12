@@ -42,7 +42,6 @@
 module axil_tb_top;
 	import uvm_pkg::*;
 	import axil_test_pkg::*;
-	// import bridge_env_pkg::*;
     
     // Clock and Reset
     reg clk; // Toggles every 5 time units
@@ -124,13 +123,14 @@ module axil_tb_top;
 
   // UVM configuration and test execution
 	initial begin
+		uvm_top.set_report_verbosity_level_hier(UVM_LOW);
 
     // Set virtual interfaces in the UVM configuration database
 		uvm_config_db#(virtual i2c_interface)::set(null, "*", "i2c_vif", i2c_if);
 		uvm_config_db#(virtual axil_if)::set(null, "*", "axil_vif", axil_vif);
 
     // Start UVM phases and run the test
-		run_test("i2c_master_test");
+		run_test("axil_basic_test");
 	end
 
 
