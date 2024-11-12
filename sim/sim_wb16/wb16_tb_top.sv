@@ -1,6 +1,6 @@
 `include "uvm_macros.svh"
 `include "../common/i2c_interface.sv"
-`include "top_interface.sv"
+`include "wb16_top_interface.sv"
 
 module wb16_tb_top;
   import uvm_pkg::*;
