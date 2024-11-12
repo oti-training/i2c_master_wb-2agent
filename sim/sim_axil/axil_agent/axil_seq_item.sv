@@ -26,25 +26,48 @@
 `define AXIL_SEQ_ITEM
 
 class axil_seq_item extends uvm_sequence_item;
-    rand bit [3:0]  addr;
-    rand bit [31:0] data;
-    rand bit [3:0]  strb;
-    rand bit        read;
-    
-    `uvm_object_utils_begin(axil_seq_item)
-        `uvm_field_int(addr, UVM_ALL_ON)
-        `uvm_field_int(data, UVM_ALL_ON)
-        `uvm_field_int(strb, UVM_ALL_ON)
-        `uvm_field_int(read, UVM_ALL_ON)
-    `uvm_object_utils_end
+	rand bit [3:0]  addr;
+	rand bit [31:0] data;
+	rand bit [3:0]  strb;
+	rand bit        read;
 
-    function new(string name = "axil_seq_item");
-        super.new(name);
-    endfunction
+	bit [3:0] cfg_address;
+	bit [31:0] cfg_data;
+	
+	`uvm_object_utils_begin(axil_seq_item)
+		`uvm_field_int(addr, UVM_ALL_ON)
+		`uvm_field_int(data, UVM_ALL_ON)
+		`uvm_field_int(strb, UVM_ALL_ON)
+		`uvm_field_int(read, UVM_ALL_ON)
+	`uvm_object_utils_end
 
-    constraint addr_c {
-        addr inside {[0:3]};
-    }
+	constraint seq_cfg_address_c {
+		addr == cfg_address;  // 7-bit address range
+	}
+
+	constraint seq_cfg_data_c {
+		data == cfg_data;  // constrain all bytes
+	}
+
+	constraint seq_cfg_data_0_c {
+		data[15:8] == cfg_data[15:8];  // constrain 2nd byte
+	}
+	
+	function new(string name = "axil_seq_item");
+		super.new(name);
+	endfunction
+
+	virtual function string convert2string();
+		string s;
+		s = $sformatf("\n----------------------------------------");
+		s = {s, $sformatf("\nAXI-Lite Transaction: %s", get_name())};
+		s = {s, $sformatf("\nAddress: 0x%0h", addr)};
+		s = {s, $sformatf("\nData:    0x%0h", data)};
+		s = {s, $sformatf("\nStrobe:  0x%0h", strb)};
+		s = {s, $sformatf("\nType:    %s", read ? "READ" : "WRITE")};
+		s = {s, $sformatf("\n----------------------------------------")};
+		return s;
+	endfunction
 endclass
 
 `endif

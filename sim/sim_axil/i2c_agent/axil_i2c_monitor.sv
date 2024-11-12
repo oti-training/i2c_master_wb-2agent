@@ -1,5 +1,5 @@
 /*  
-* File: i2c_monitor.sv
+* File: axil_i2c_monitor.sv
 *
 * This file implements the I2C monitor component for the verification
 * environment.
@@ -40,14 +40,14 @@
 * - Consider adding coverage collection directly in the monitor
 *
 */
-`ifndef I2C_MONITOR
-`define I2C_MONITOR
+`ifndef AXIL_I2C_MONITOR_SV
+`define AXIL_I2C_MONITOR_SV
 
-class i2c_monitor extends uvm_monitor;
+class axil_i2c_monitor extends uvm_monitor;
     virtual i2c_interface vif;
     uvm_analysis_port #(i2c_trans) ap;
     
-    `uvm_component_utils(i2c_monitor)
+    `uvm_component_utils(axil_i2c_monitor)
     
     function new(string name, uvm_component parent);
         super.new(name, parent);

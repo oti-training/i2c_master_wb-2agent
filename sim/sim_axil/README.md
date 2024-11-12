@@ -30,8 +30,8 @@ graph TD
    - It instantiates the DUT, interfaces, and manages the UVM test execution.
    - Responsible for clock generation, reset logic, and connecting the DUT to the verification environment.
 
-2. **bridge_env.sv**
-   - Defines the `bridge_env` class, which is the top-level environment.
+2. **axil_bridge_env.sv**
+   - Defines the `axil_bridge_env` class, which is the top-level environment.
    - Instantiates and connects all sub-components: AXI-Lite agent, I2C agent, scoreboard, and coverage collector.
 
 ### Package and Define Files
@@ -50,7 +50,7 @@ graph TD
 6. **axil_test_pkg.sv**
    - Package containing test-related classes and configurations.
 
-7. **bridge_env_pkg.sv**
+7. **axil_bridge_env_pkg.sv**
    - Package that encapsulates the environment setup and its components.
 
 ### Agent-Related Files
@@ -78,8 +78,8 @@ graph TD
     - Defines the `i2c_trans` class for I2C transactions.
     - Includes fields for I2C address, data, and read/write operations.
 
-13. **i2c_monitor.sv**
-    - Implements the `i2c_monitor` class that observes I2C bus activity.
+13. **axil_i2c_monitor.sv**
+    - Implements the `axil_i2c_monitor` class that observes I2C bus activity.
     - Converts I2C bus-level activity into transaction objects.
 
 14. **i2c_responder.sv**

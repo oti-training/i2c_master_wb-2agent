@@ -344,7 +344,7 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
 
     // encapsulate set_property and start task
     // not directly implemented in the body task due to input arguments
-    task write_i2c (bit [6:0] device_addr, bit [7:0] reg_addr, bit [15:0] data [$], int len=1, uvm_sequencer_base seqr);
+    task write_i2c (logic [6:0] device_addr, logic [7:0] reg_addr, logic [15:0] data [$], int len=1, uvm_sequencer_base seqr);
         this.set_property(device_addr, reg_addr, data, len);
         this.start(seqr);
     endtask

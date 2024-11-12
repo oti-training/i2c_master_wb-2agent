@@ -36,20 +36,20 @@ package axil_seq_list;
    // importing packages : agent,ref model, register ...
    /////////////////////////////////////////////////////////
 	import i2c_master_axil_pkg::*;
-	import bridge_env_pkg::*;
+	import axil_bridge_env_pkg::*;
 	import axil_agent_pkg::axil_seq_item;
+	import common_i2c_pkg::i2c_transaction;
+	import common_seq_lib::*;
    //////////////////////////////////////////////////////////
    // include top env files 
    /////////////////////////////////////////////////////////
-   // TODO: Group related sequences and consider using separate files for complex sequences
-	`include "api_single_rw_seq.sv"
+	// APIs
+	`include "axil_bus_seq.sv"
 
-	`include "memory_slave_seq.sv"
+	// AXI-Lite workers
+	`include "axil_i2c_op_write_seq.sv" // write to i2c
+	`include "axil_i2c_op_read_seq.sv" // read to i2c
 
-	`include "config_seq.sv"
-	`include "write_read_seq.sv"
-
-   // TODO: Add factory registration for all sequences if not done in individual files
 endpackage
 
 `endif

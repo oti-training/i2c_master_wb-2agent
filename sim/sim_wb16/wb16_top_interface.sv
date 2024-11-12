@@ -1,7 +1,11 @@
 /**
  * Top Level DUT's Interface
  */
+<<<<<<< HEAD
 interface wb16_interface (input logic clk);
+=======
+interface wb16_interface(input logic clk);
+>>>>>>> 8e221c92bf78586c24758fe2da9b5be7c9b4735e
 
 // Generic signals
 logic        rst;

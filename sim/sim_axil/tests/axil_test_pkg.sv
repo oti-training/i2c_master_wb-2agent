@@ -29,11 +29,11 @@ package axil_test_pkg;
 
    // Import custom packages
 	import axil_seq_list::*;
-	import bridge_env_pkg::*;
+	import axil_bridge_env_pkg::*;
+	import common_seq_lib::basic_rd_wr_vseq;
 
    // Include test case files
-  `include "i2c_master_base_test.sv"
-  `include "i2c_master_test.sv"
+  `include "axil_basic_test.sv"
 
    // Note: Add new test case includes here as they are developed
 endpackage

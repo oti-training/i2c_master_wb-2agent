@@ -19,7 +19,7 @@ class sequence_item_base extends uvm_sequence_item;
     rand logic                      rw; // r:0, w:1
 
 endclass
-class sequence_item_base_derived #(int ADDR_WIDTH = 16) extends sequence_item_base;
+class sequence_item_base_derived #(int ADDR_WIDTH = 8) extends sequence_item_base;
 
     // register object to UVM Factory
     `uvm_object_utils(sequence_item_base_derived);

@@ -6,7 +6,7 @@
 * 
 * Key Components:
 * - i2c_trans: Defines the structure of I2C transactions
-* - i2c_monitor: Monitors I2C bus activity
+* - axil_i2c_monitor: Monitors I2C bus activity
 * - i2c_responder: Simulates an I2C slave device
 *
 * COMPLIANCE ISSUES:
@@ -32,7 +32,7 @@ package i2c_agent_pkg;
    // include top env files 
    /////////////////////////////////////////////////////////
   `include "i2c_trans.sv"
-  `include "i2c_monitor.sv"
+  `include "axil_i2c_monitor.sv"
   `include "i2c_responder.sv"
 
   // TODO: Consider adding i2c_config.sv for agent configuration
