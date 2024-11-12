@@ -59,6 +59,7 @@ class wb8_bus_seq extends uvm_sequence #(wb8_seq_item);
 
 	// Check data register until it finds valid data
 	task read_data_until_valid();
+		begin
 		is_write = 0;
 		// read status register
 		req.cfg_address = FIFO_STATUS_REG;
@@ -67,10 +68,9 @@ class wb8_bus_seq extends uvm_sequence #(wb8_seq_item);
 		end while ((rsp.data[6]));
 		// read data
 		req.cfg_address = DATA_REG;
-		begin
-			start(sequencer);
-		end
+		start(sequencer);
 		`uvm_info(get_type_name(), $sformatf("Read data register response %s", rsp.convert2string()), UVM_LOW)
+		end
 	endtask
 
 endclass
