@@ -15,10 +15,10 @@
 * - Lack of parameterization might limit reusability with different I2C configurations (e.g., 10-bit addressing)
 */
 
-`ifndef I2C_AGENT_PKG
-`define I2C_AGENT_PKG
+`ifndef wb8_I2C_AGENT_PKG
+`define wb8_I2C_AGENT_PKG
 
-package i2c_agent_pkg;
+package wb8_i2c_agent_pkg;
    
    import uvm_pkg::*;
    `include "uvm_macros.svh"
@@ -32,8 +32,8 @@ package i2c_agent_pkg;
    // include top env files 
    /////////////////////////////////////////////////////////
   `include "i2c_trans.sv"
-  `include "axil_i2c_monitor.sv"
-  `include "i2c_responder.sv"
+  `include "wb8_i2c_monitor.sv"
+  // `include "i2c_responder.sv"
 
   // TODO: Consider adding i2c_config.sv for agent configuration
   // TODO: Add i2c_seq_lib.sv for common I2C sequences
