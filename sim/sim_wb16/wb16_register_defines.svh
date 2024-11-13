@@ -44,12 +44,12 @@ typedef struct packed {
 } status_reg_t;
 
 // Command register flags
-typedef enum bit [15:0] {
-	CMD_STOP	= 15'b1 << 4,    // Stop condition
-	CMD_WR_M	= 15'b1 << 3,     // Write multiple bytes
-	CMD_WRITE	= 15'b1 << 2,     // Write operation
-	CMD_READ	= 15'b1 << 1,     // Read operation
-	CMD_START	= 15'b1 << 0      // Start condition
+typedef enum bit [5:0] {
+	CMD_STOP	= 5'b1 << 4,    // Stop condition
+	CMD_WR_M	= 5'b1 << 3,     // Write multiple bytes
+	CMD_WRITE	= 5'b1 << 2,     // Write operation
+	CMD_READ	= 5'b1 << 1,     // Read operation
+	CMD_START	= 5'b1 << 0      // Start condition
 } reg_cmd_flag_t;
 
 // Data register flags

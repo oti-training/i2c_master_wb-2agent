@@ -5,6 +5,7 @@ class wb16_bus_seq extends uvm_sequence #(wb16_seq_item);
     `uvm_object_utils(wb16_bus_seq)
 	wb16_seq_item req;
 	bit is_write;
+	bit [15:0] cmd_data;
 	uvm_sequencer_base sequencer;
 
     function new(string name = "wb16_bus_seq");
@@ -38,11 +39,13 @@ class wb16_bus_seq extends uvm_sequence #(wb16_seq_item);
 	endtask
 
 	// write to command register
-	task write_command(bit [4:0] command, bit [7:0] dev_addr);
-		is_write = 1;
+	task write_command(bit [4:0] command, bit [6:0] dev_addr);
+		is_write		= 1;
+		cmd_data [12:8]	= command;
+		cmd_data [6:0]	= dev_addr;
 		req.cfg_address = CMD_REG;
 		req.cfg_data = {
-			(command << 8) | dev_addr
+			cmd_data
 		};
 		start(sequencer);
 	endtask
