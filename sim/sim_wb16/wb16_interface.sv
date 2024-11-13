@@ -1,14 +1,10 @@
 /**
  * Top Level DUT's Interface
  */
-<<<<<<< HEAD
-interface wb16_interface (input logic clk);
-=======
-interface wb16_interface(input logic clk);
->>>>>>> 8e221c92bf78586c24758fe2da9b5be7c9b4735e
+interface wb16_if(input logic clk, input logic rst);
 
 // Generic signals
-logic        rst;
+// logic        rst;
 
 // Host interface
 logic  [2:0] wbs_adr_i;   // ADR_I() address
@@ -21,15 +17,15 @@ logic        wbs_ack_o;   // ACK_O acknowledge output
 logic        wbs_cyc_i;   // CYC_I cycle input
 
 // I2C interface
-logic        i2c_scl_i;
-logic        i2c_scl_o;
-logic        i2c_scl_t;
-logic        i2c_sda_i;
-logic        i2c_sda_o;
-logic        i2c_sda_t;
+// logic        i2c_scl_i;
+// logic        i2c_scl_o;
+// logic        i2c_scl_t;
+// logic        i2c_sda_i;
+// logic        i2c_sda_o;
+// logic        i2c_sda_t;
 
 // Responder interface
-logic        resp_sda_o;
+// logic        resp_sda_o;
 
 
 /**
@@ -49,15 +45,15 @@ modport driver(
     output          wbs_sel_i,
     output          wbs_stb_i,
     input           wbs_ack_o,
-    output          wbs_cyc_i,
+    output          wbs_cyc_i
 
     // I2C interface
-    input           i2c_scl_i,
-    input           i2c_scl_o,
-    input           i2c_scl_t,
-    input           i2c_sda_i,
-    input           i2c_sda_o,
-    input           i2c_sda_t
+    // input           i2c_scl_i,
+    // input           i2c_scl_o,
+    // input           i2c_scl_t,
+    // input           i2c_sda_i,
+    // input           i2c_sda_o,
+    // input           i2c_sda_t
 );
 // slave agent driver
 modport driver_slave(
@@ -72,17 +68,17 @@ modport driver_slave(
     input          wbs_we_i, 
     input          wbs_stb_i,
     input           wbs_ack_o,
-    input          wbs_cyc_i,
+    input          wbs_cyc_i
 
     // I2C interface
-    output          i2c_scl_i,
-    input           i2c_scl_o,
-    input           i2c_scl_t,
-    output          i2c_sda_i,
-    input           i2c_sda_o,
-    input           i2c_sda_t,
+    // output          i2c_scl_i,
+    // input           i2c_scl_o,
+    // input           i2c_scl_t,
+    // output          i2c_sda_i,
+    // input           i2c_sda_o,
+    // input           i2c_sda_t,
 
-    output          resp_sda_o
+    // output          resp_sda_o
 );
 // monitor
 modport monitor(
@@ -97,15 +93,15 @@ modport monitor(
     input           wbs_we_i, 
     input           wbs_stb_i,
     input           wbs_ack_o,
-    input           wbs_cyc_i,
+    input           wbs_cyc_i
 
     // I2C interface
-    input           i2c_scl_i,
-    input           i2c_scl_o,
-    input           i2c_scl_t,
-    input           i2c_sda_i,
-    input           i2c_sda_o,
-    input           i2c_sda_t
+    // input           i2c_scl_i,
+    // input           i2c_scl_o,
+    // input           i2c_scl_t,
+    // input           i2c_sda_i,
+    // input           i2c_sda_o,
+    // input           i2c_sda_t
 );
 endinterface
 
