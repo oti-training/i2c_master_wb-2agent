@@ -1,40 +1,6 @@
 `ifndef SEQUENCER
 `define SEQUENCER
 
-// `define USE_MULTI_TRANSFER
-
-/******************************
- * UVM SEQUENCE ITEM
- ******************************/
-class sequence_item extends uvm_sequence_item;
-
-    // driving signals
-    rand logic   [2:0]  addr;
-    rand logic   [15:0]  data;
-    rand logic          rw; // r:0, w:1
-
-    // register object to UVM Factory
-    `uvm_object_utils(sequence_item);
-
-    constraint address_range {
-        addr == 4;
-    }
-
-    constraint command_range {
-        rw == 1;
-    }
-
-    constraint data_range {
-        data < 16'h10;
-    }
-
-    // constructor
-    function new (string name="");
-        super.new(name);
-    endfunction
-
-endclass
-
 /******************************
  * UVM SEQUENCE API
  ******************************/
@@ -64,6 +30,9 @@ class read_sequence_api extends uvm_sequence #(sequence_item);
         req.data = 0;
         req.rw = 0;
         finish_item(req);
+
+        // fetch output
+        rdata = req.data;
     endtask
 
     // encapsulate set_property and start task
@@ -72,8 +41,6 @@ class read_sequence_api extends uvm_sequence #(sequence_item);
         this.set_property(raddr);
         this.start(seqr, parent);
 
-        // fetch output
-        rdata = req.data;
     endtask
 
 endclass
@@ -114,6 +81,10 @@ class write_sequence_api extends uvm_sequence #(sequence_item);
     endtask
 
 endclass
+
+/******************************
+ * UVM SEQUENCE WORKER
+ ******************************/
 
 class random_sequence_worker extends uvm_sequence #(sequence_item);
 
@@ -209,9 +180,6 @@ class random_sequence_worker extends uvm_sequence #(sequence_item);
 
 endclass
 
-/******************************
- * UVM SEQUENCE WORKER
- ******************************/
 class read_i2c_worker extends uvm_sequence #(sequence_item);
 
     // register object to UVM Factory
@@ -264,7 +232,7 @@ class read_i2c_worker extends uvm_sequence #(sequence_item);
         //     -> read i2c data output register from wishbone bridge
 
         // targeting a specific register inside a device
-        // write_sequence_api_inst.write(WB_DEVICE_ADDR, this.device_addr, m_sequencer, this);
+        
         write_sequence_api_inst.write(WB_DATA_ADDR, this.reg_addr, m_sequencer, this);
         write_sequence_api_inst.write(WB_CMD_ADDR, (16'h500 | this.device_addr) , m_sequencer, this);   // write command
 
@@ -314,12 +282,13 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
     write_sequence_api write_sequence_api_inst;
 
     // internal properties
+
     logic   [6:0]   device_addr;
     logic   [7:0]   reg_addr;
-    logic   [15:0]   data;
+    logic   [15:0]  data [$];
     int             len;
     
-    function set_property (logic [6:0] device_addr, logic [7:0] reg_addr, logic [15:0] data, int len);
+    function set_property (logic [6:0] device_addr, logic [7:0] reg_addr, logic [15:0] data [$], int len);
         this.device_addr = device_addr;
         this.reg_addr = reg_addr;
         this.data = data;
@@ -362,7 +331,7 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
             if (i == this.len-1) cmd = cmd | 16'h1000; // stop command
 
             // write i2c data to wishbone reg
-            write_sequence_api_inst.write(WB_DATA_ADDR, this.data, m_sequencer, this);
+            write_sequence_api_inst.write(WB_DATA_ADDR, this.data.pop_front(), m_sequencer, this);
 
             // transfer read i2c command
             write_sequence_api_inst.write(WB_CMD_ADDR, (cmd | this.device_addr), m_sequencer, this);
@@ -375,11 +344,10 @@ class write_i2c_worker extends uvm_sequence #(sequence_item);
 
     // encapsulate set_property and start task
     // not directly implemented in the body task due to input arguments
-    task write_i2c (bit [6:0] device_addr, bit [7:0] reg_addr, bit [15:0] data, int len=1, uvm_sequencer_base seqr);
+    task write_i2c (logic [6:0] device_addr, logic [7:0] reg_addr, logic [15:0] data [$], int len=1, uvm_sequencer_base seqr);
         this.set_property(device_addr, reg_addr, data, len);
         this.start(seqr);
     endtask
-
 endclass
 
 class wb_master_sequencer extends uvm_sequencer #(sequence_item);
@@ -409,6 +377,7 @@ class wb_master_vsequence extends uvm_sequence #(sequence_item);
     // create sequencer handler
     uvm_sequencer_base sequencer_1;
 
+
     // create sequence
     write_i2c_worker write_sequence;    
     read_i2c_worker read_sequence;  
@@ -416,26 +385,37 @@ class wb_master_vsequence extends uvm_sequence #(sequence_item);
     // write_random_sequence_api write_random_sequence;
     random_sequence_worker random_sequence;    
 
+    // config object
+    wb16_i2c_test_config config_obj;
+
     // run the sequence
     task body;
         integer i;
+        string scope_name;
         // not randomized objects
         write_sequence = write_i2c_worker::type_id::create("write_sequence");
         read_sequence = read_i2c_worker::type_id::create("read_sequence");
         // test objects
         random_sequence = random_sequence_worker::type_id::create("random_sequence");
-        
+
+
         begin
+            scope_name = get_full_name();
+            if (!uvm_config_db#(wb16_i2c_test_config)::get(null, "", "wb16_i2c_test_config", config_obj))
+                `uvm_error("VIRTUAL_SEQUENCE", "Config Object cannot be loaded")
+            
+            if (config_obj.test_type == 0) begin
+            // not randomized operaiton
+                write_sequence.write_i2c(7'h6, 8'ha, {8'h33, 8'h44}, 2, sequencer_1);
+                read_sequence.read_i2c(7'h6, 8'ha, 2, sequencer_1);
+                write_sequence.write_i2c(7'h6, 8'ha, {8'h11}, 1, sequencer_1);
+                read_sequence.read_i2c(7'h6, 8'ha, 2, sequencer_1);
+            end
 
-            // write_sequence.write_i2c(7'h6, 8'ha, 8'h33, 1, sequencer_1);
-            // read_sequence.read_i2c(7'h6, 8'ha, 2, sequencer_1);
-            // read_sequence.read_i2c(7'h6, 8'ha, 2, sequencer_1);
-            // write_sequence.write_i2c(7'h6, 8'ha, 8'h11, 1, sequencer_1);
-            // write_sequence.write_i2c(7'h6, 8'hb, 8'h22, 1, sequencer_1);
-            // read_sequence.read_i2c(7'h6, 8'ha, 2, sequencer_1);
-
-
-            random_sequence.start(sequencer_1);
+            // test operation
+            else if (config_obj.test_type == 1) begin
+                random_sequence.start(sequencer_1);
+            end
         end
     endtask
 

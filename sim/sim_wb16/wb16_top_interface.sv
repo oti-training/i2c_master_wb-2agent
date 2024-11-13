@@ -1,20 +1,17 @@
 /**
  * Top Level DUT's Interface
  */
-interface top_interface #(int size = 16);
+interface wb16_interface(input logic clk);
 
 // Generic signals
-logic        clk;
 logic        rst;
 
 // Host interface
 logic  [2:0] wbs_adr_i;   // ADR_I() address
-logic  [size-1:0] wbs_dat_i;   // DAT_I() data in
-logic  [size-1:0] wbs_dat_o;   // DAT_O() data out
-
-logic [1:0] wbs_sel_i; // Only for Size == 16
-
+logic  [15:0] wbs_dat_i;   // DAT_I() data in
+logic  [15:0] wbs_dat_o;   // DAT_O() data out
 logic        wbs_we_i;    // WE_I write enable input
+logic  [1:0] wbs_sel_i;   
 logic        wbs_stb_i;   // STB_I strobe input
 logic        wbs_ack_o;   // ACK_O acknowledge output
 logic        wbs_cyc_i;   // CYC_I cycle input
@@ -45,9 +42,7 @@ modport driver(
     output          wbs_dat_i,
     input           wbs_dat_o,
     output          wbs_we_i,
-
-    output wbs_sel_i,  // Only connected if WBS_16 is defined
-    
+    output          wbs_sel_i,
     output          wbs_stb_i,
     input           wbs_ack_o,
     output          wbs_cyc_i,
@@ -113,51 +108,22 @@ endinterface
 /**
  * Interfaced Top Level DUT
  */
-module i2c_master_wbs_interfaced #(int size = 16) (top_interface top_if);
+module i2c_master_wbs_16_interfaced (wb16_interface top_if, i2c_interface i2c_if);
 
-wire sda_i;
-wire dut_sda_o;
-wire scl_i;
-wire dut_scl_o;
+// copied this from the documentation
+assign scl_dut_i = scl_dut_o & scl_tb_o;
+assign scl_tb_i = scl_dut_o & scl_tb_o;
+assign sda_dut_i = sda_dut_o & sda_tb_o;
+assign sda_tb_i = sda_dut_o & sda_tb_o;
 
-// connect scl and sda for inout operation
-assign sda_i = dut_sda_o & top_if.resp_sda_o;
-assign scl_i = dut_scl_o;
-
-assign top_if.i2c_scl_i = scl_i;
-assign top_if.i2c_sda_i = sda_i;
-assign top_if.i2c_scl_o = dut_scl_o;
-assign top_if.i2c_sda_o = dut_sda_o;
+// connect the above logic to the interface
+assign scl_tb_o = 1'b1; 
+assign sda_tb_o = i2c_if.sda_o;
+assign i2c_if.scl_i = scl_tb_i;
+assign i2c_if.sda_i = sda_tb_i;
 
 // DUT
-if (size == 16) begin
-    i2c_master_wbs_16 DUT(
-        // Generic signals
-        .clk(top_if.clk),
-        .rst(top_if.rst),
-
-        // Host interface
-        .wbs_adr_i(top_if.wbs_adr_i),
-        .wbs_dat_i(top_if.wbs_dat_i),
-        .wbs_dat_o(top_if.wbs_dat_o),
-        .wbs_we_i(top_if.wbs_we_i),
-        .wbs_sel_i(top_if.wbs_sel_i), 
-        .wbs_stb_i(top_if.wbs_stb_i),
-        .wbs_ack_o(top_if.wbs_ack_o),
-        .wbs_cyc_i(top_if.wbs_cyc_i),
-
-        // I2C interface
-        .i2c_scl_i(scl_i),
-        .i2c_scl_o(dut_scl_o),
-        .i2c_scl_t(top_if.i2c_scl_t),
-        .i2c_sda_i(sda_i),
-        .i2c_sda_o(dut_sda_o),
-        .i2c_sda_t(top_if.i2c_sda_t)
-    );
-end
-
-else if (size == 8) begin
-    i2c_master_wbs_8 DUT(
+i2c_master_wbs_16 DUT(
     // Generic signals
     .clk(top_if.clk),
     .rst(top_if.rst),
@@ -166,19 +132,18 @@ else if (size == 8) begin
     .wbs_adr_i(top_if.wbs_adr_i),
     .wbs_dat_i(top_if.wbs_dat_i),
     .wbs_dat_o(top_if.wbs_dat_o),
-    .wbs_we_i(top_if.wbs_we_i), 
+    .wbs_we_i(top_if.wbs_we_i),
+    .wbs_sel_i(top_if.wbs_sel_i), 
     .wbs_stb_i(top_if.wbs_stb_i),
     .wbs_ack_o(top_if.wbs_ack_o),
     .wbs_cyc_i(top_if.wbs_cyc_i),
 
     // I2C interface
-    .i2c_scl_i(scl_i),
-    .i2c_scl_o(dut_scl_o),
+    .i2c_scl_i(scl_dut_i),
+    .i2c_scl_o(scl_dut_o),
     .i2c_scl_t(top_if.i2c_scl_t),
-    .i2c_sda_i(sda_i),
-    .i2c_sda_o(dut_sda_o),
+    .i2c_sda_i(sda_dut_i),
+    .i2c_sda_o(sda_dut_o),
     .i2c_sda_t(top_if.i2c_sda_t)
 );
-end
-
 endmodule

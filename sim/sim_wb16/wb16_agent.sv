@@ -1,14 +1,9 @@
 `ifndef AGENT
 `define AGENT
 
-`include "driver.svh"
-`include "monitor.svh"
-`include "sequence.svh"
-
 class wb_master_agent extends uvm_agent;
   
     // register agent as component to UVM Factory
-    uvm_analysis_port #(monitor_sequence_item) bypass_port;
     `uvm_component_utils(wb_master_agent);
 
     // default constructor
@@ -27,13 +22,11 @@ class wb_master_agent extends uvm_agent;
         wb_master_sequencer_handler = wb_master_sequencer::type_id::create("wb_master_sequencer_handler", this);
         wb_master_driver_handler = wb_master_driver::type_id::create("wb_master_driver_handler", this);
         wb_master_monitor_handler = wb_master_monitor::type_id::create("wb_master_monitor_handler", this);
-        bypass_port = new("bypass_port", this);
     endfunction
 
      // connect phase function
     function void connect_phase(uvm_phase phase);
         wb_master_driver_handler.seq_item_port.connect(wb_master_sequencer_handler.seq_item_export);
-        wb_master_monitor_handler.ap.connect(bypass_port);
     endfunction
   
     // run phase task
