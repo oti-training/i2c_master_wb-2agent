@@ -38,11 +38,11 @@ class wb16_bus_seq extends uvm_sequence #(wb16_seq_item);
 	endtask
 
 	// write to command register
-	task write_command(bit [15:0] flags);
+	task write_command(bit [4:0] command, bit [7:0] dev_addr);
 		is_write = 1;
 		req.cfg_address = CMD_REG;
 		req.cfg_data = {
-			flags
+			(command << 8) | dev_addr
 		};
 		start(sequencer);
 	endtask

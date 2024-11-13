@@ -11,15 +11,15 @@ class wb16_i2c_op_read_seq extends master_i2c_op_base_seq;
 
 		// address phase and first byte	
 		// api.write_slaveaddr(slave_addr);
-		api.write_command(CMD_START | CMD_READ | slave_addr);
+		api.write_command(CMD_START | CMD_READ , slave_addr);
 
 		// rest of the bytes
 		repeat (payload_data_length-1) begin
-			api.write_command(CMD_READ | slave_addr);
+			api.write_command(CMD_READ , slave_addr);
 		end
 
 		// stop
-		api.write_command(CMD_STOP | slave_addr);
+		api.write_command(CMD_STOP , slave_addr);
 
 		// read register
 		repeat (payload_data_length)

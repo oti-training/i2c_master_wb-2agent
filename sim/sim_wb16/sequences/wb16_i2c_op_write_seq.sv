@@ -11,18 +11,18 @@ class wb16_i2c_op_write_seq extends master_i2c_op_base_seq;
 
 		// address phase
 		// api.write_slaveaddr(slave_addr);
-		api.write_command(CMD_START | CMD_WRITE | slave_addr);
+		api.write_command(CMD_START | CMD_WRITE , slave_addr);
 
 		// data phase
 		repeat (payload_data_length-1) begin 
 			api.write_data;//(DATA_DEFAULT);	
-			api.write_command(CMD_WRITE | slave_addr);
+			api.write_command(CMD_WRITE , slave_addr);
 		end
 		// api.write_data(DATA_LAST);
 
 		// stop
 		api.write_data;
-		api.write_command(CMD_STOP | slave_addr );
+		api.write_command(CMD_STOP , slave_addr );
 	endtask
 
     function new(string name = "wb16_i2c_op_write_seq");
