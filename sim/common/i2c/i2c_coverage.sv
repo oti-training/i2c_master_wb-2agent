@@ -1,7 +1,26 @@
-// Coverage types:
-// Multiple bytes, single bytes,
-// Permutative operations example bins twoops[] = ([add_op:mul_op] [* 2]);
-// Later: reset to operation & operation to reset
+// Currently implements coverage for:
+// - Slave address ranges (low/mid/high)
+// - Payload data size ranges 
+// - Payload data values and patterns
+// - Transaction direction (read/write)
+// - Cross coverage between address/size/direction
+//
+// Potential improvements:
+// - Add coverage for specific address patterns
+// - Cover consecutive transactions
+// - Add coverage for clock stretching scenarios
+// - Cover arbitration scenarios
+// - Add protocol error scenarios coverage
+// - Cover repeated start conditions
+// - Add transition coverage between states
+//
+// Implementation notes:
+// - Uses UVM subscriber pattern to collect coverage
+// - Separate covergroups for modular coverage collection
+// - Combined covergroup for cross coverage analysis
+// - Auto bin settings ensure complete 7-bit address coverage
+// - Ignores empty write transactions in cross coverage
+
 `ifndef I2C_COVERAGE
 `define I2C_COVERAGE
 class i2c_coverage extends uvm_subscriber #(i2c_transaction);
