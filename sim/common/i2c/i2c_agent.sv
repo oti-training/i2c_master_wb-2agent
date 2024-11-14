@@ -24,6 +24,7 @@ class i2c_agent extends uvm_agent;
 	
 	i2c_driver driver;
 	i2c_monitor monitor;
+  i2c_coverage coverage;
     uvm_sequencer #(i2c_transaction) sequencer;
 
 	//--------------------------------------------------------------------------
@@ -39,10 +40,12 @@ class i2c_agent extends uvm_agent;
 		driver = i2c_driver::type_id::create("driver", this);
         sequencer = uvm_sequencer#(i2c_transaction)::type_id::create("sequencer", this);
 		monitor = i2c_monitor::type_id::create("monitor", this);
+    coverage = i2c_coverage::type_id::create("coverage", this);
 	endfunction : build_phase
 	
 	function void connect_phase(uvm_phase phase);
 		driver.seq_item_port.connect(sequencer.seq_item_export);
+    monitor.mon2sb.connect(coverage.analysis_export);
 	endfunction : connect_phase
  
 endclass
