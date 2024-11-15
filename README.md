@@ -11,6 +11,9 @@ vivado -mode tcl -source run_axil.tcl
 ```
 vivado -mode tcl -source run_wb_8.tcl
 ```
+```
+vivado -mode tcl -source run_wb_16.tcl
+```
 
 # To run simulation using bash script
 ## First time initialization
@@ -20,6 +23,9 @@ chmod +x run_axil.sh
 ```
 chmod +x run_wb_8.sh
 ```
+```
+chmod +x run_wb_16.sh
+```
 
 ## Using The script
 ```
@@ -27,4 +33,7 @@ chmod +x run_wb_8.sh
 ```
 ```
 ./run_wb_8.sh
+```
+```
+./run_wb_16.sh
 ```

@@ -24,6 +24,7 @@ xvlog -sv -L uvm ../sim/common/i2c/common_i2c_pkg.sv
 xvlog -sv -L uvm ../sim/common/sequences/common_seq_lib.sv
 xvlog -sv -L uvm ../sim/common/utils/common_utils_pkg.sv
 xvlog -sv -L uvm ../sim/sim_axil/env/axil_bridge_env_pkg.sv
+
 xvlog -sv -L uvm ../sim/sim_axil/sequences/axil_seq_list.sv
 xvlog -sv -L uvm ../sim/sim_axil/tests/axil_test_pkg.sv
 # Compile interface and DUT files
