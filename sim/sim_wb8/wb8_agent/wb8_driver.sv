@@ -53,7 +53,7 @@ class wb8_driver extends uvm_driver #(wb8_seq_item);
 			// send out to reference model
 			$cast(to_rm,req.clone());
 			to_rm.start_time = $time;
-			if (req.addr != FIFO_STATUS_REG) drv2rm_port.write(to_rm);
+			drv2rm_port.write(to_rm);
 			// return to sequencer
 			$cast(rsp,req.clone());
 			rsp.set_id_info(req);

@@ -87,7 +87,7 @@ class wb8_monitor extends uvm_monitor;
             end
         end
 
-        if (txn_valid && tr.addr != FIFO_STATUS_REG) begin
+        if (txn_valid) begin
             // send the data through the analysis port
             ap.write(tr);
         end

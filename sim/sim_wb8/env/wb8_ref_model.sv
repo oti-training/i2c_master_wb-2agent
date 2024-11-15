@@ -114,7 +114,7 @@ class wb8_ref_model extends uvm_component;
 	task wb8_expected_transaction();
 		if (wb8_trans.read) begin
 			case (wb8_trans.addr)
-				// FIFO_STATUS_REG: 
+				FIFO_STATUS_REG: read_fifo_status();
 				DATA_REG: read_data();
 			endcase
 		end
@@ -189,6 +189,26 @@ class wb8_ref_model extends uvm_component;
 	//----------------------------------------------------------------------------
 	// AXI-Lite Register Reads
 	//----------------------------------------------------------------------------
+
+	task read_fifo_status();
+		// todo: fix below
+		bit [7:0] status = 0; 
+		bit skip_first = 0;
+		bit cmd_none = 1;
+		foreach (wb8_queue[i]) begin
+			if ((wb8_queue[i].addr == CMD_REG) && (wb8_queue[i].data & CMD_WRITE)) begin 
+				cmd_none = 0;
+				status |= 1 << 3;
+				break;
+			end
+		end
+
+		if (cmd_none) status |= 1 << 0;
+
+		if (read_data_queue.size() > 0) status |= 1 << 6;
+
+		wb8_trans.data = status;
+	endtask
 
 	// read data register
 	task read_data();

@@ -92,7 +92,7 @@ class wb8_scoreboard extends uvm_scoreboard;
 		exp_trans = wb8_exp_queue.pop_front();
 		act_trans = wb8_act_queue.pop_front();
 
-		if (!exp_trans.compare_without_invalid_read(act_trans)) begin
+		if (!exp_trans.compare_status(act_trans)) begin
 
 			`uvm_error(get_type_name(), $sformatf(
 				"AXI-Lite transaction mismatch:\nExpected:%s\nActual:%s",

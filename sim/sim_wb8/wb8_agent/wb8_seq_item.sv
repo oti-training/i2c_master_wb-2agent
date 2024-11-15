@@ -53,17 +53,16 @@ class wb8_seq_item extends uvm_sequence_item;
 		super.new(name);
 	endfunction
 
-	function bit compare_without_invalid_read( wb8_seq_item trans );
-		bit is_invalid_read_data_reg;
+	function bit compare_status( wb8_seq_item trans );
+		bit is_read_status;
 		
-		is_invalid_read_data_reg =
-			!trans.data[8] && trans.read && (trans.addr==DATA_REG);
+		is_read_status =
+			trans.read && (trans.addr==FIFO_STATUS_REG);
 
-		is_invalid_read_data_reg = is_invalid_read_data_reg && (
-			!this.data[8] && this.read && (this.addr==DATA_REG)
-		);
+		is_read_status = is_read_status && (
+			this.read && (this.addr==FIFO_STATUS_REG));
 
-		if (is_invalid_read_data_reg) return 1;
+		if (is_read_status) return 1;
 		else return compare(trans);
 	endfunction
 
