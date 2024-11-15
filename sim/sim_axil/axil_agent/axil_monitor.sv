@@ -41,54 +41,64 @@ class axil_monitor extends uvm_monitor;
     endfunction
 
     task run_phase(uvm_phase phase);
+		@(vif.monitor_cb);
         forever begin
-            axil_seq_item tr = axil_seq_item::type_id::create("tr");
-            collect_transaction(tr);
-            ap.write(tr);
+            collect_transaction();
         end
     endtask
 
-    task collect_transaction(axil_seq_item tr);
-        fork
+    task collect_transaction;
+		fork begin fork
             begin : write_collection
                 axil_seq_item write_tr;
-                @(vif.monitor_cb iff vif.monitor_cb.awvalid && vif.monitor_cb.awready);
-                write_tr = axil_seq_item::type_id::create("write_tr");
-                write_tr.addr = vif.monitor_cb.awaddr;
-                write_tr.read = 0;
+				write_tr = axil_seq_item::type_id::create("write_tr");
+				write_tr.start_time = $time;
+				`uvm_info(get_type_name(), "Waiting for write", UVM_HIGH);
+				fork
+					begin: write_address_channel_process
+						wait(vif.monitor_cb.awvalid & vif.monitor_cb.awready);
+
+						write_tr.addr = vif.monitor_cb.awaddr;
+						write_tr.read = 0;
+						`uvm_info(get_type_name(), "Write address retrieved", UVM_HIGH);
+					end
+					begin: write_data_channel_process
+						wait(vif.monitor_cb.wvalid & vif.monitor_cb.wready);
+						write_tr.data = vif.monitor_cb.wdata;
+						write_tr.strb = vif.monitor_cb.wstrb;
+						`uvm_info(get_type_name(), "Write data retrieved", UVM_HIGH);
+					end
+				join
                 
-                @(vif.monitor_cb iff vif.monitor_cb.wvalid && vif.monitor_cb.wready);
-                write_tr.data = vif.monitor_cb.wdata;
-                write_tr.strb = vif.monitor_cb.wstrb;
+                wait(vif.monitor_cb.bvalid & vif.monitor_cb.bready);
                 
-                @(vif.monitor_cb iff vif.monitor_cb.bvalid && vif.monitor_cb.bready);
-                
-                `uvm_info("AXIL_MON", $sformatf("Collected write transaction: addr=%h data=%h", 
-                         write_tr.addr, write_tr.data), UVM_MEDIUM)
+                `uvm_info(get_type_name(), {"Collected write transaction",
+					write_tr.convert2string()}, UVM_MEDIUM)
                 ap.write(write_tr);
             end
             
             begin : read_collection
                 axil_seq_item read_tr;
-                @(vif.monitor_cb iff vif.monitor_cb.arvalid && vif.monitor_cb.arready);
                 read_tr = axil_seq_item::type_id::create("read_tr");
+				read_tr.start_time = $time;
+				`uvm_info(get_type_name(), "Waiting for read", UVM_HIGH);
+                wait(vif.monitor_cb.arvalid && vif.monitor_cb.arready);
                 read_tr.addr = vif.monitor_cb.araddr;
                 read_tr.read = 1;
+				`uvm_info(get_type_name(), "Read address retrieved", UVM_HIGH);
                 
-                @(vif.monitor_cb iff vif.monitor_cb.rvalid && vif.monitor_cb.rready);
+                wait(vif.monitor_cb.rvalid && vif.monitor_cb.rready);
                 read_tr.data = vif.monitor_cb.rdata;
                 
-                `uvm_info("AXIL_MON", $sformatf("Collected read transaction: addr=%h data=%h", 
-                         read_tr.addr, read_tr.data), UVM_MEDIUM)
+                `uvm_info(get_type_name(), {"Collected read transaction",
+					read_tr.convert2string()}, UVM_MEDIUM)
                 ap.write(read_tr);
             end
         join_any
         disable fork;
+						`uvm_info(get_type_name(), "End of fork", UVM_HIGH);
+		end join
     endtask
-    // TODO: Add coverage collection method
-    // function void collect_coverage(axil_seq_item item);
-    //     // Implement coverage collection logic here
-    // endfunction
 
     // TODO: Add method to check for protocol violations
     // function void check_protocol_compliance(axil_seq_item item);

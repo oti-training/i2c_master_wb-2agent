@@ -15,8 +15,14 @@ class axil_bus_seq extends uvm_sequence #(axil_seq_item);
     task body();
         start_item(req);
 		if (!req.randomize() with {
-			req.read == !is_write;
-			req.strb == 4'b0011;
+			if (is_write) {
+				req.read == 0;
+				req.strb == 4'b0011;
+			}
+			else {
+				req.read == 1;
+				req.strb == 4'b0000;
+			}
 		})
 			`uvm_error(get_type_name(), "Randomization failed")
 		
@@ -35,7 +41,7 @@ class axil_bus_seq extends uvm_sequence #(axil_seq_item);
 		req.cfg_address = DATA_REG;
 		req.cfg_data[9:8] = flags;
 		start(sequencer);
-		`uvm_info(get_type_name(), $sformatf("Write data register request %s", req.convert2string()), UVM_LOW)
+		`uvm_info(get_type_name(), $sformatf("Write data register request %s", req.convert2string()), UVM_HIGH)
 	endtask
 
 	// write to command register
@@ -56,9 +62,12 @@ class axil_bus_seq extends uvm_sequence #(axil_seq_item);
 		is_write = 0;
 		req.cfg_address = DATA_REG;
 		do begin
-			start(sequencer);
-		end while (!(rsp.data[9:8] & DATA_VALID));
-		`uvm_info(get_type_name(), $sformatf("Read data register response %s", rsp.convert2string()), UVM_LOW)
+			fork
+				start(sequencer);
+				#100;
+			join
+		end while ((rsp.data[9:8] & DATA_VALID) == 2'b00);
+		`uvm_info(get_type_name(), $sformatf("Read data register response %s", rsp.convert2string()), UVM_HIGH)
 	endtask
 
 endclass

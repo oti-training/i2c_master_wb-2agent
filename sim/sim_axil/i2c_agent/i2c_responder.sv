@@ -54,17 +54,17 @@ class i2c_responder extends uvm_component;
     
     // Detect I2C start condition
     task monitor_start_condition();
-        @(negedge vif.sda_i iff vif.scl_i === 1);  
+        @(negedge vif.sda_o iff vif.scl_o === 1);  
         `uvm_info("I2C_RESP", "START condition detected", UVM_MEDIUM)
     endtask
     
     // Receive a byte from I2C bus
     task receive_byte(output bit [7:0] data);
         for(int i = 7; i >= 0; i--) begin
-            @(posedge vif.scl_i);  
-            data[i] = vif.sda_i;
-            `uvm_info("I2C_RESP", $sformatf("[%t] received bit %d = %d", $time, i, data[i]), UVM_HIGH)
-			wait (!vif.scl_i);
+            @(posedge vif.scl_o);  
+            data[i] = vif.sda_o;
+            `uvm_info("HAHAHAHAHA PER-NAME", $sformatf("[%t] bit %d = %d", $time, i, data[i]), UVM_HIGH)
+			wait (!vif.scl_o);
         end
     endtask
     
@@ -81,13 +81,12 @@ class i2c_responder extends uvm_component;
 				if (vif.sda_i) begin
 					is_stop = 1;
             		`uvm_info(get_type_name(), "stop bit detected", UVM_MEDIUM)
-            		`uvm_info(get_type_name(), "stop bit detected", UVM_MEDIUM)
 					break;
 				end
 			end
 
             `uvm_info(get_type_name(), $sformatf("[%t] bit %d = %d", $time, i, data[i]), UVM_HIGH)
-			wait (!vif.scl_i);
+			wait (!vif.scl_o);
         end
     endtask
     
@@ -103,16 +102,18 @@ class i2c_responder extends uvm_component;
 
     task send_byte(bit [7:0] data);
         `uvm_info("I2C_RESP", "send byte start", UVM_HIGH)
-        `uvm_info("I2C_RESP", "send byte start", UVM_HIGH)
         for(int i = 7; i >= 0; i--) begin
-            vif.sda_o <= data[i]; // Set SDA to bit value
+            vif.sda_i <= data[i];
             `uvm_info("I2C_RESP", $sformatf("[%t] sent bit %d = %d", $time, i, data[i]), UVM_HIGH)
-            wait (vif.scl_i);      // Wait for SCL rising edge
-            wait (!vif.scl_i);     // Wait for SCL falling edge
+            `uvm_info("KENTUT", $sformatf("[%t] bit %d = %d", $time, i, data[i]), UVM_HIGH)
+            wait (vif.scl_o);
+            wait (!vif.scl_o);
         end
         vif.sda_o <= 1;            // Release SDA
     endtask
 
+    // To do: 
+    // - Change to driver_slave sequencer from axil
     // Main run task
     task run_phase(uvm_phase phase);
         bit [7:0] addr_byte;

@@ -29,6 +29,9 @@ class axil_driver extends uvm_driver #(axil_seq_item);
     
     `uvm_component_utils(axil_driver)
 
+	// port for reference model
+	uvm_analysis_port#(axil_seq_item) drv2rm_port;
+
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -38,12 +41,31 @@ class axil_driver extends uvm_driver #(axil_seq_item);
         if(!uvm_config_db#(virtual axil_if)::get(this, "", "axil_vif", vif)) begin
             `uvm_fatal("NOVIF", $sformatf("Virtual interface not found for %s", get_full_name()))
         end
+		drv2rm_port = new("drv2rm_port", this);
     endfunction
 
     task run_phase(uvm_phase phase);
+		// initialize outputs
+        vif.driver_cb.bready <= 0;
+        vif.driver_cb.rready <= 0;
+        vif.driver_cb.araddr <= 0;
+        vif.driver_cb.arprot <= 0;
+        vif.driver_cb.arvalid <= 0;
+
         forever begin
+			axil_seq_item to_rm;
+			
+			// receive from sequencer
             seq_item_port.get_next_item(req);
-            drive_transaction(req);
+
+            drive_transaction();
+
+			// send out to reference model
+			$cast(to_rm,req.clone());
+			to_rm.start_time = $time;
+			drv2rm_port.write(to_rm);
+
+			// return to sequencer
 			$cast(rsp,req.clone());
 			rsp.set_id_info(req);
             seq_item_port.item_done();
@@ -51,7 +73,7 @@ class axil_driver extends uvm_driver #(axil_seq_item);
         end
     endtask
 
-    task drive_transaction(axil_seq_item req);
+    task drive_transaction();
         // TODO: Add proper reset handling here
 
         if(req.read) begin
@@ -67,7 +89,9 @@ class axil_driver extends uvm_driver #(axil_seq_item);
             vif.driver_cb.rready <= 1;
             @(vif.driver_cb);
             while(!vif.driver_cb.rvalid) @(vif.driver_cb);
+			
             req.data = vif.driver_cb.rdata;
+
             vif.driver_cb.rready <= 0;
         end else begin
             @(vif.driver_cb);

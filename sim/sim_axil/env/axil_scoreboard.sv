@@ -3,110 +3,140 @@
 *
 * This file implements the scoreboard for checking AXI-Lite and I2C transactions.
 *
-* TODO:
 * - Implement more sophisticated checking for multi-byte transfers
 * - Add checks for I2C timing compliance
 * - Consider using a more structured approach for expected transaction storage
 *
 * COMPLIANCE ISSUES:
-* - The fixed slave address (7'h50) should be configurable
-* - Error messages should use UVM macros consistently
-* - Consider using separate classes for AXI and I2C transaction storage
+* - Ref model should model timing for read delay
 */
-`ifndef SCOREBOARD
-`define SCOREBOARD
 
-class scoreboard extends uvm_scoreboard;
-    `uvm_analysis_imp_decl(_axil)  // Add this line
-    `uvm_analysis_imp_decl(_i2c)   // Add this line
-    
-    uvm_analysis_imp_axil #(axil_seq_item, scoreboard) axil_export;
-    uvm_analysis_imp_i2c #(i2c_trans, scoreboard) i2c_export;
-    
-    i2c_trans expected_i2c_queue[$];
-    bit [31:0] expected_seq[$];
-	bit [6:0] current_slave;
-    
-    `uvm_component_utils(scoreboard)
-    
-    function new(string name, uvm_component parent);
-        super.new(name, parent);
-        axil_export = new("axil_export", this);
-        i2c_export = new("i2c_export", this);
-    endfunction
-    
-    function void write_axil(axil_seq_item item);
+`ifndef AXIL_SCOREBOARD_SV 
+`define AXIL_SCOREBOARD_SV
 
-      `uvm_info("SCBD", $sformatf("Received AXI transaction: addr=%h data=%h read=%b strb=%h", 
-                item.addr, item.data, item.read, item.strb), UVM_DEBUG)
-        
-        if (!item.read) begin // Write transaction
-            if (item.addr == DATA_REG) begin
-                // Create expected I2C write transaction
-                i2c_trans expected = i2c_trans::type_id::create("expected");
-                expected.addr = 7'h50; // Fixed slave address for now
-                expected.read = 1'b0;  // Write transaction
-                expected.data = item.data & 8'hFF; // Data byte
-                expected_i2c_queue.push_back(expected);
-                
-                `uvm_info("SCBD", $sformatf("Queued expected I2C write transaction: addr=%h read=%b data=%h", 
-                          expected.addr, expected.read, expected.data), UVM_MEDIUM)
-			end 
-			// else if ((item.addr == CMD_REG) & item.data[:])
-            else if (item.addr == CMD_REG && (item.data[15] == 1'b1)) begin
-                // Create expected I2C read transaction only if read bit is set
-                i2c_trans expected = i2c_trans::type_id::create("expected");
-                expected.addr = 7'h50; // Fixed slave address
-                expected.read = 1'b1;  // Read transaction
-                expected_i2c_queue.push_back(expected);
-                
-                `uvm_info("SCBD", $sformatf("Queued expected I2C read transaction: addr=%h read=%b", 
-                          expected.addr, expected.read), UVM_MEDIUM)
-            // TODO: Handle other register writes (CMD_REG, etc.)
-            end
-        end
-        expected_seq.push_back(item.data);
-    endfunction
-    
-    function void report_phase(uvm_phase phase);
-        super.report_phase(phase);
-        `uvm_info("SCBD", $sformatf("Total AXI transactions: %0d", expected_seq.size()), UVM_MEDIUM)
-        `uvm_info("SCBD", $sformatf("Remaining expected I2C transactions: %0d", 
-                  expected_i2c_queue.size()), UVM_MEDIUM)
-        
-        if(expected_i2c_queue.size() != 0) begin
-            foreach(expected_i2c_queue[i]) begin
-                `uvm_error("SCBD", $sformatf("Missing I2C transaction: %s", 
-                          expected_i2c_queue[i].convert2string()))
-            end
-        end
-    endfunction
+class axil_scoreboard extends uvm_scoreboard;
+	`uvm_component_utils(axil_scoreboard)
 
-    function void write_i2c(i2c_trans item);
-        if(expected_i2c_queue.size() > 0) begin
-            i2c_trans expected = expected_i2c_queue.pop_front();
-            `uvm_info("SCBD", $sformatf("Comparing I2C transaction - Expected: %s, Got: %s",
-                                       expected.convert2string(), item.convert2string()), UVM_MEDIUM)
-            
-            if(item.nack) begin
-                `uvm_info("SCBD", "I2C NACK received - Transaction failed", UVM_MEDIUM)
-                expected_i2c_queue.push_front(expected);
-                return;
-            end
+	`uvm_analysis_imp_decl(_axil_exp)
+	`uvm_analysis_imp_decl(_axil_act)
+	`uvm_analysis_imp_decl(_i2c_exp)
+	`uvm_analysis_imp_decl(_i2c_act)
 
-            if(item.addr != expected.addr || item.read != expected.read || 
-               (!item.read && item.data != expected.data)) begin
-                `uvm_error("SCBD", $sformatf("I2C Mismatch! Expected: %s, Got: %s", 
-                                           expected.convert2string(), item.convert2string()))
-            end else begin
-                `uvm_info("SCBD", "I2C transaction matched!", UVM_LOW)
-            end
-        end else begin
-            `uvm_error("SCBD", $sformatf("Unexpected I2C transaction received: %s", 
-                                        item.convert2string()))
-        end
-    endfunction
-    
+	// Analysis imports
+	uvm_analysis_imp_axil_exp #(axil_seq_item, axil_scoreboard) axil_exp_imp;
+	uvm_analysis_imp_axil_act #(axil_seq_item, axil_scoreboard) axil_act_imp;
+	uvm_analysis_imp_i2c_exp #(i2c_transaction, axil_scoreboard) i2c_exp_imp;
+	uvm_analysis_imp_i2c_act #(i2c_transaction, axil_scoreboard) i2c_act_imp;
+
+	// incoming transaction
+	axil_seq_item axil_exp_queue[$], axil_act_queue[$];
+	i2c_transaction i2c_exp_queue[$], i2c_act_queue[$];
+
+	// Error flag
+	bit error;
+
+	function new(string name, uvm_component parent);
+		super.new(name, parent);
+	endfunction : new
+
+	function void build_phase(uvm_phase phase);
+		super.build_phase(phase);
+		axil_exp_imp = new("axil_exp_imp", this);
+		axil_act_imp = new("axil_act_imp", this);
+		i2c_exp_imp = new("i2c_exp_imp", this);
+		i2c_act_imp = new("i2c_act_imp", this);
+	endfunction: build_phase
+
+	// Analysis port write implementations
+	function void write_axil_exp(axil_seq_item trans);
+		`uvm_info(get_type_name(), {"Receive AXI-Lite Expected", trans.convert2string()}, UVM_HIGH);
+		axil_exp_queue.push_back(trans);
+	endfunction
+
+	function void write_axil_act(axil_seq_item trans);
+		`uvm_info(get_type_name(), {"Receive AXI-Lite Actual", trans.convert2string()}, UVM_HIGH);
+		axil_act_queue.push_back(trans);
+	endfunction
+
+	function void write_i2c_exp(i2c_transaction trans);
+		`uvm_info(get_type_name(), {"Receive I2C Expected", trans.convert2string()}, UVM_HIGH);
+		i2c_exp_queue.push_back(trans);
+	endfunction
+
+	function void write_i2c_act(i2c_transaction trans);
+		`uvm_info(get_type_name(), {"Receive I2C Actual", trans.convert2string()}, UVM_HIGH);
+		i2c_act_queue.push_back(trans);
+	endfunction
+
+	task run_phase(uvm_phase phase);
+		super.run_phase(phase);
+		forever begin
+			// Wait for either AXI-Lite or I2C transactions to be available
+			while(!((axil_exp_queue.size() > 0 && axil_act_queue.size() > 0) ||
+					(i2c_exp_queue.size() > 0 && i2c_act_queue.size() > 0))) begin
+						#1;
+					end
+			
+			if (axil_exp_queue.size() > 0 && axil_act_queue.size() > 0) begin
+				compare_axil_trans();
+			end
+			if (i2c_exp_queue.size() > 0 && i2c_act_queue.size() > 0) begin
+				compare_i2c_trans();
+			end
+		end
+	endtask
+
+	task compare_axil_trans();
+		axil_seq_item exp_trans, act_trans;
+		
+		exp_trans = axil_exp_queue.pop_front();
+		act_trans = axil_act_queue.pop_front();
+
+		if (!exp_trans.compare_without_invalid_read(act_trans)) begin
+
+			`uvm_error(get_type_name(), $sformatf(
+				"AXI-Lite transaction mismatch:\nExpected:%s\nActual:%s",
+				exp_trans.convert2string(), act_trans.convert2string()))
+			
+			error = 1;
+		end else begin
+			`uvm_info(get_type_name(), {"AXI-Lite transaction matched",
+				act_trans.convert2string()}, UVM_MEDIUM)
+		end
+	endtask
+
+	task compare_i2c_trans();
+		i2c_transaction exp_trans, act_trans;
+		
+		exp_trans = i2c_exp_queue.pop_front();
+		act_trans = i2c_act_queue.pop_front();
+
+		if (!exp_trans.compare(act_trans)) begin
+			`uvm_error(get_type_name(), $sformatf("I2C transaction mismatch:\nExpected:\n%s\nActual:\n%s", exp_trans.sprint(), act_trans.sprint()))
+			error = 1;
+		end else begin
+			`uvm_info(get_type_name(), {"I2C transaction matched",
+				act_trans.convert2string()}, UVM_MEDIUM)
+		end
+	endtask
+
+	function void report_phase(uvm_phase phase);
+		$display($sformatf("AXI-Lite queue: %0d/%0d\nI2C queue: %0d/%0d", axil_act_queue.size(), axil_exp_queue.size(), i2c_act_queue.size(), i2c_exp_queue.size()));
+		if ((axil_act_queue.size() != 0) ||(axil_exp_queue.size() != 0)
+		|| (i2c_act_queue.size() != 0) || (i2c_exp_queue.size() != 0)) begin
+			`uvm_error(get_type_name(), $sformatf("Scoreboard queue not depleted"))
+			error = 1;
+		end
+		if(error==0) begin
+			$display("-------------------------------------------------");
+			$display("------ INFO : TEST CASE PASSED ------------------");
+			$display("-----------------------------------------");
+		end else begin
+			$display("---------------------------------------------------");
+			$display("------ ERROR : TEST CASE FAILED ------------------");
+			$display("---------------------------------------------------");
+		end
+	endfunction 
 endclass
 
 `endif

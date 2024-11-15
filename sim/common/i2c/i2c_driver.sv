@@ -31,6 +31,9 @@ class i2c_driver extends uvm_driver #(i2c_transaction);
 	// Current transaction being processed
 	protected i2c_transaction current_trans;
 
+	// Port for reference model
+	uvm_analysis_port#(i2c_transaction) drv2rm_port;
+
 	// Buffer for driving read bytes
 	protected bit [7:0] byte_buffer;
 	
@@ -64,6 +67,7 @@ class i2c_driver extends uvm_driver #(i2c_transaction);
 		super.build_phase(phase);
 		if (!uvm_config_db#(virtual i2c_interface)::get(this, "", "i2c_vif", vif))
 			`uvm_fatal("NOVIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"})
+		drv2rm_port = new("drv2rm_port", this);
 	endfunction
 
 	//--------------------------------------------------------------------------
@@ -105,7 +109,14 @@ class i2c_driver extends uvm_driver #(i2c_transaction);
 			`uvm_info(get_type_name(), "START condition detected", UVM_HIGH)
 			bit_count = 0;
 			if (current_trans == null) begin
+				i2c_transaction to_rm;
+
 				seq_item_port.get_next_item(current_trans);
+				
+				$cast(to_rm,current_trans.clone());
+				to_rm.set_id_info(current_trans);
+				drv2rm_port.write(to_rm);
+				
 				is_ongoing = 1;
 			end
 		end

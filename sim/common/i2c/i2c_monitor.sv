@@ -33,7 +33,7 @@ class i2c_monitor extends uvm_monitor;
 	protected bit [7:0] byte_buffer;
 
 	// Port to broadcast observed transactions
-	uvm_analysis_port #(i2c_transaction) analysis_port; // Renamed from analysis_port
+	uvm_analysis_port #(i2c_transaction) mon2sb;
 
 	//--------------------------------------------------------------------------
 	// Transaction and State Variables
@@ -52,7 +52,7 @@ class i2c_monitor extends uvm_monitor;
 	// Constructor
 	function new(string name = "i2c_monitor", uvm_component parent = null);
 		super.new(name, parent);
-		analysis_port = new("analysis_port", this);
+		mon2sb = new("mon2sb", this);
 	endfunction
 
 	// Build phase - Get virtual interface
@@ -102,8 +102,10 @@ class i2c_monitor extends uvm_monitor;
 		if (vif.scl_i) begin
 			`uvm_info(get_type_name(), "STOP condition detected", UVM_HIGH)
 			if (current_trans != null) begin
-				analysis_port.write(current_trans);
-				`uvm_info(get_type_name(), $sformatf("I2C transaction finished %s", current_trans.convert2string()), UVM_LOW)
+				mon2sb.write(current_trans);
+				`uvm_info(get_type_name(), $sformatf(
+					"I2C transaction finished %s",
+					current_trans.convert2string()), UVM_HIGH)
 				current_trans = null;
 			end
 			bits_received = 0;

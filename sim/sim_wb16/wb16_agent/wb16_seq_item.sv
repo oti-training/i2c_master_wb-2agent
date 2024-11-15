@@ -1,5 +1,5 @@
 /* 
-* File: axil_seq_item.sv
+* File: WB16_seq_item.sv
 *
 * This file defines the AXI-Lite sequence item, which represents a single AXI-Lite transaction.
 * 
@@ -22,67 +22,42 @@
 * - The addr_c constraint might be too restrictive. Ensure it aligns with the 
 *   actual register map of the DUT.
 */
-`ifndef AXIL_SEQ_ITEM
-`define AXIL_SEQ_ITEM
+`ifndef WB16_SEQ_ITEM
+`define WB16_SEQ_ITEM
 
-class axil_seq_item extends uvm_sequence_item;
-	rand bit [3:0]  addr;
-	rand bit [31:0] data;
-	rand bit [3:0]  strb;
+class wb16_seq_item extends uvm_sequence_item;
+	rand bit [2:0]  addr;
+	rand bit [15:0]  data;
 	rand bit        read;
 
-	time start_time;
-
-	bit [3:0] cfg_address;
-	bit [31:0] cfg_data;
+	bit [2:0] cfg_address;
+	bit [15:0] cfg_data;
 	
-	`uvm_object_utils_begin(axil_seq_item)
+	`uvm_object_utils_begin(wb16_seq_item)
 		`uvm_field_int(addr, UVM_ALL_ON)
 		`uvm_field_int(data, UVM_ALL_ON)
-		`uvm_field_int(strb, UVM_ALL_ON)
 		`uvm_field_int(read, UVM_ALL_ON)
 	`uvm_object_utils_end
 
 	constraint seq_cfg_address_c {
-		addr == cfg_address;  // 7-bit address range
+		addr == cfg_address;  // 3-bit address range
 	}
 
 	constraint seq_cfg_data_c {
 		data == cfg_data;  // constrain all bytes
 	}
-
-	constraint seq_cfg_data_0_c {
-		data[15:8] == cfg_data[15:8];  // constrain 2nd byte
-	}
 	
-	function new(string name = "axil_seq_item");
+	function new(string name = "wb16_seq_item");
 		super.new(name);
-	endfunction
-
-	// if both read data is invalid, exempt from comparison
-	function bit compare_without_invalid_read( axil_seq_item trans );
-		bit is_invalid_read_data_reg;
-		
-		is_invalid_read_data_reg =
-			!trans.data[8] && trans.read && (trans.addr==DATA_REG);
-
-		is_invalid_read_data_reg = is_invalid_read_data_reg && (
-			!this.data[8] && this.read && (this.addr==DATA_REG)
-		);
-
-		if (is_invalid_read_data_reg) return 1;
-		else return compare(trans);
 	endfunction
 
 	virtual function string convert2string();
 		string s;
 		s = $sformatf("\n----------------------------------------");
-		s = {s, $sformatf("\nAXI-Lite Transaction: %s", get_name())};
+		s = {s, $sformatf("\nWB16 Transaction: %s", get_name())};
 		s = {s, $sformatf("\nAddress: 0x%0h", addr)};
 		s = {s, $sformatf("\nData:    0x%0h", data)};
-		s = {s, $sformatf("\nStrobe:  0x%0h", strb)};
 		s = {s, $sformatf("\nType:    %s", read ? "READ" : "WRITE")};
-		s = {s, $sformatf("\nStart Time: %0t", start_time)};
 		s = {s, $sformatf("\n----------------------------------------")};
 		return s;
 	endfunction

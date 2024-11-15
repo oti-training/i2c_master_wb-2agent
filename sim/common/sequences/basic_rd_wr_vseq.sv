@@ -48,7 +48,7 @@ class basic_rd_wr_vseq #(type T=master_i2c_op_base_seq) extends uvm_sequence;
             payload_data_length == 1;
         } else {
             // limit maximum length to 16 bytes
-            payload_data_length inside {[1:16]};
+            payload_data_length inside {[2:16]};
         }
     }
 

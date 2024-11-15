@@ -1,39 +1,37 @@
-`ifndef AXIL_BASIC_TEST
-`define AXIL_BASIC_TEST
+`ifndef WB16_BASIC_TEST
+`define WB16_BASIC_TEST
 
-class axil_basic_test extends uvm_test;
-    axil_bridge_env env;
+class wb16_basic_test extends uvm_test;
+    wb16_bridge_env env;
     
-    `uvm_component_utils(axil_basic_test)
+    `uvm_component_utils(wb16_basic_test)
     
-    function new(string name = "axil_basic_test", uvm_component parent);
+    function new(string name = "wb16_basic_test", uvm_component parent);
         super.new(name, parent);
     endfunction
     
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        env = axil_bridge_env::type_id::create("env", this);
+        env = wb16_bridge_env::type_id::create("env", this);
     endfunction
 
     task run_phase(uvm_phase phase);
 		int multiplier_number = 5;
 
-        basic_rd_wr_vseq#(axil_i2c_op_read_seq) read_vseq;
-        basic_rd_wr_vseq#(axil_i2c_op_write_seq) write_vseq;
+        basic_rd_wr_vseq#(wb16_i2c_op_read_seq) read_vseq;
+        basic_rd_wr_vseq#(wb16_i2c_op_write_seq) write_vseq;
 
-		read_vseq = basic_rd_wr_vseq#(axil_i2c_op_read_seq)::
+		read_vseq = basic_rd_wr_vseq#(wb16_i2c_op_read_seq)::
 			type_id::create("read_vseq", this);
-		write_vseq = basic_rd_wr_vseq#(axil_i2c_op_write_seq)::
+		write_vseq = basic_rd_wr_vseq#(wb16_i2c_op_write_seq)::
 			type_id::create("write_vseq", this);
         
         phase.raise_objection(this);
 
         read_vseq.configure(
-			env.axil_seqr, env.i2c_agnt.sequencer);
+			env.wb16_seqr, env.i2c_agent_instance.sequencer);
         write_vseq.configure(
-			env.axil_seqr, env.i2c_agnt.sequencer);
-
-		env.scbd.set_report_verbosity_level(UVM_MEDIUM);
+			env.wb16_seqr, env.i2c_agent_instance.sequencer);
 
 		// single read & write
         repeat (multiplier_number) read_vseq.start_single();
