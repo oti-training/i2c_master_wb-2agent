@@ -123,7 +123,7 @@ class master_to_i2c_translator extends uvm_component;
 
         init_checklist[START] = 1'b1;
 
-        current_tr = i2c_transaction::type_id::create("trans");
+        // current_tr = i2c_transaction::type_id::create("trans");
         
         // change state if init checklist is complete
         init_valid_check();
@@ -156,15 +156,15 @@ class master_to_i2c_translator extends uvm_component;
     // Records slave address after START
     // Must be called before setting direction
     function void add_slave_addr(bit [6:0] slave_addr);
-        assert(!init_checklist[ADDR] && current_state == IDLE)
+		assert(!init_checklist[1] && current_state == IDLE)
         else `uvm_fatal(get_type_name(),
             "Add slave address error")
 
-        init_checklist[ADDR] = 1'b1;
-
+		init_checklist[1] = 1'b1;
+		
         // current_state = ADDR_PHASE;
         current_tr.slave_addr = slave_addr;
-
+		
         // change state if init checklist is complete
         init_valid_check();
     endfunction
@@ -227,6 +227,7 @@ class master_to_i2c_translator extends uvm_component;
     // Constructor
     function new(string name="master_to_i2c_translator", uvm_component parent);
         super.new(name, parent);
+        current_tr = i2c_transaction::type_id::create("trans");
     endfunction
 
 endclass
