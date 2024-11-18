@@ -35,11 +35,12 @@ package axil_bridge_env_pkg;
   // Import required custom packages
 	import i2c_master_axil_pkg::*;
 	import i2c_agent_pkg::*;
-	import common_i2c_pkg::i2c_agent;
+	import common_i2c_pkg::*;
 	import axil_agent_pkg::*;
+	import common_utils_pkg::*;
 
   // Include environment components
-  `include "axil_scoreboard.sv"
+  `include "axil_ref_model.sv"
   `include "axil_coverage.sv"
   `include "axil_bridge_env.sv"
 

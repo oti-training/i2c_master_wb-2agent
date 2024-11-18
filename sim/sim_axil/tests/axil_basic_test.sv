@@ -29,9 +29,11 @@ class axil_basic_test extends uvm_test;
         phase.raise_objection(this);
 
         read_vseq.configure(
-			env.axil_seqr, env.i2c_agent_instance.sequencer);
+			env.axil_seqr, env.i2c_agnt.sequencer);
         write_vseq.configure(
-			env.axil_seqr, env.i2c_agent_instance.sequencer);
+			env.axil_seqr, env.i2c_agnt.sequencer);
+
+		env.scbd.set_report_verbosity_level(UVM_MEDIUM);
 
 		// single read & write
         repeat (multiplier_number) read_vseq.start_single();
