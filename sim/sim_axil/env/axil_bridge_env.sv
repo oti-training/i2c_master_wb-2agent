@@ -26,7 +26,7 @@ class axil_bridge_env extends uvm_env;
     axil_monitor   axil_mon;
     axil_i2c_monitor    i2c_mon;
     uvm_sequencer #(axil_seq_item) axil_seqr;
-    axil_scoreboard scbd;
+    scoreboard #(axil_seq_item) scbd;
     axil_coverage cov;
 
 	axil_ref_model ref_model;
@@ -49,7 +49,7 @@ class axil_bridge_env extends uvm_env;
         cov = axil_coverage::type_id::create("cov", this);
 
 		ref_model = axil_ref_model::type_id::create("ref_model", this);
-        scbd = axil_scoreboard::type_id::create("scbd", this);
+        scbd = scoreboard#(axil_seq_item)::type_id::create("scbd", this);
 		i2c_agnt = i2c_agent::type_id::create("i2c_agent", this);
     endfunction
     
@@ -65,11 +65,11 @@ class axil_bridge_env extends uvm_env;
 		i2c_agnt.driver.drv2rm_port.connect(ref_model.i2c_imp);
 
 		// Connect reference model to scoreboard
-		ref_model.axil_rm2sb_port.connect(scbd.axil_exp_imp);
+		ref_model.axil_rm2sb_port.connect(scbd.master_exp_imp);
 		ref_model.i2c_rm2sb_port.connect(scbd.i2c_exp_imp);
 
         // Connect monitors to scoreboard
-        axil_mon.ap.connect(scbd.axil_act_imp);
+        axil_mon.ap.connect(scbd.master_act_imp);
         i2c_agnt.monitor.mon2sb.connect(scbd.i2c_act_imp);
 
         // Connect AXI-Lite monitor to coverage collector

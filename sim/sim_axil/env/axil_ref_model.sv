@@ -141,7 +141,7 @@ class axil_ref_model extends uvm_component;
 
 	// write to command register
 	task write_command();
-		bit [4:0] flags = axil_trans.data[12:8];
+		bit [7:0] flags = axil_trans.data[15:8];
 
 		// command to start i2c transaction
 		if (flags & CMD_START) 
@@ -164,7 +164,7 @@ class axil_ref_model extends uvm_component;
 
 	// write to data register
 	task write_data();
-		bit [1:0] flags = axil_trans.data[9:8];
+		bit [7:0] flags = axil_trans.data[15:8];
 
 		`uvm_info(get_type_name(), $sformatf("Add to write queue %h",
 			axil_trans.data[15:0]), UVM_HIGH)
@@ -190,7 +190,7 @@ class axil_ref_model extends uvm_component;
 
 		if (next_valid_read > axil_trans.start_time) begin
 			`uvm_info(get_type_name(), "Invalid read", UVM_HIGH)
-			axil_trans.data = {22'h0, 2'b00, 8'h00};
+			axil_trans.data = {16'h0, DATA_DEFAULT, 8'h00};
 		end
 		else begin
 			`uvm_info(get_type_name(), "Valid read", UVM_HIGH)
@@ -201,7 +201,7 @@ class axil_ref_model extends uvm_component;
 				"Ref model has not implemented empty queue!")
 
 			data_from_i2c = read_data_queue.pop_front();
-			axil_trans.data = {22'h0, DATA_VALID, data_from_i2c};
+			axil_trans.data = {16'h0, DATA_VALID, data_from_i2c};
 
 			// todo: scale with prescaler register
 			next_valid_read += 1010;
@@ -212,7 +212,7 @@ class axil_ref_model extends uvm_component;
 	// AXI-Lite Command Handlers
 	//----------------------------------------------------------------------------
 
-	task handle_start_command(bit [4:0] flags);
+	task handle_start_command(bit [7:0] flags);
 		bit [6:0] slave_addr = axil_trans.data[6:0];
 		
 		`uvm_info(get_type_name(), "Start bit detected", UVM_HIGH)

@@ -19,9 +19,12 @@ xvlog -sv -L uvm ../sim/sim_axil/register_defines.svh
 xvlog -sv -L uvm ../sim/sim_axil/i2c_master_axil_pkg.sv
 xvlog -sv -L uvm ../sim/sim_axil/i2c_agent/axil_i2c_agent_pkg.sv
 xvlog -sv -L uvm ../sim/sim_axil/axil_agent/axil_agent_pkg.sv
+
 xvlog -sv -L uvm ../sim/common/i2c/common_i2c_pkg.sv
-xvlog -sv -L uvm ../sim/sim_axil/env/axil_bridge_env_pkg.sv
 xvlog -sv -L uvm ../sim/common/sequences/common_seq_lib.sv
+xvlog -sv -L uvm ../sim/common/utils/common_utils_pkg.sv
+xvlog -sv -L uvm ../sim/sim_axil/env/axil_bridge_env_pkg.sv
+
 xvlog -sv -L uvm ../sim/sim_axil/sequences/axil_seq_list.sv
 xvlog -sv -L uvm ../sim/sim_axil/tests/axil_test_pkg.sv
 # Compile interface and DUT files
@@ -36,6 +39,8 @@ xvlog -sv -L uvm ../sim/sim_axil/axil_tb_top.sv
 xelab -L uvm -timescale 1ns/1ps -debug typical axil_tb_top -s axil_tb_top
 
 # Run simulation
-xsim -R axil_tb_top -testplusarg "UVM_VERBOSITY=UVM_LOW"
+xsim -R axil_tb_top -testplusarg "UVM_VERBOSITY=UVM_LOW" 
+
+xcrg -dir ./xsim.covdb/ -report_format html -report_dir ./coverage_report
 
 cd ..

@@ -124,6 +124,7 @@ module axil_tb_top;
   // UVM configuration and test execution
 	initial begin
 		uvm_top.set_report_verbosity_level_hier(UVM_LOW);
+  		uvm_top.set_report_id_verbosity("MISCMP", UVM_NONE);
 
     // Set virtual interfaces in the UVM configuration database
 		uvm_config_db#(virtual i2c_interface)::set(null, "*", "i2c_vif", i2c_if);

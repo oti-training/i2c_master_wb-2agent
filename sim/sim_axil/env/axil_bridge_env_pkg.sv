@@ -41,7 +41,6 @@ package axil_bridge_env_pkg;
 
   // Include environment components
   `include "axil_ref_model.sv"
-  `include "axil_scoreboard.sv"
   `include "axil_coverage.sv"
   `include "axil_bridge_env.sv"
 

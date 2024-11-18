@@ -60,18 +60,31 @@ class axil_seq_item extends uvm_sequence_item;
 	endfunction
 
 	// if both read data is invalid, exempt from comparison
-	function bit compare_without_invalid_read( axil_seq_item trans );
+	function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+		axil_seq_item trans;
 		bit is_invalid_read_data_reg;
 		
+		if (!$cast(trans, rhs)) begin
+			`uvm_error(get_type_name(), "Cast failed")
+			return 0;
+		end
+		
+		// Check our special case first
 		is_invalid_read_data_reg =
-			!trans.data[8] && trans.read && (trans.addr==DATA_REG);
-
-		is_invalid_read_data_reg = is_invalid_read_data_reg && (
-			!this.data[8] && this.read && (this.addr==DATA_REG)
-		);
-
-		if (is_invalid_read_data_reg) return 1;
-		else return compare(trans);
+			!(trans.data[15:8] & DATA_VALID) && trans.read && (trans.addr==DATA_REG) &&
+			!(this.data[15:8] & DATA_VALID) && this.read && (this.addr==DATA_REG);
+			
+		if (is_invalid_read_data_reg) begin
+			`uvm_info(get_type_name(),
+				"Invalid read data reg detected - treating as match", UVM_HIGH)
+			// Clear any miscompares that may have been recorded
+			comparer.result = 0;
+			comparer.miscompares = "";
+			return 1;
+		end
+		
+		// Not our special case, do normal comparison
+		return super.do_compare(rhs, comparer);
 	endfunction
 
 	virtual function string convert2string();

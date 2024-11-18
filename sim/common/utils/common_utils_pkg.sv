@@ -36,6 +36,8 @@ import common_i2c_pkg::i2c_transaction;
 
 `include "master_to_i2c_translator.sv"
 
+`include "scoreboard.sv"
+
 endpackage
 
 `endif // COMMON_I2C_PKG_SV
