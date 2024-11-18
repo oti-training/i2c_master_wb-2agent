@@ -41,7 +41,6 @@ package wb8_bridge_env_pkg;
 
   // Include environment components
   `include "wb8_ref_model.sv"
-  `include "wb8_scoreboard.sv"
   `include "wb8_coverage.sv"
   `include "wb8_bridge_env.sv"
 
