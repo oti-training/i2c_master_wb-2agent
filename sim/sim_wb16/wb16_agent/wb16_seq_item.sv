@@ -30,6 +30,8 @@ class wb16_seq_item extends uvm_sequence_item;
 	rand bit [15:0]  data;
 	rand bit        read;
 
+	time start_time;
+
 	bit [2:0] cfg_address;
 	bit [15:0] cfg_data;
 	
@@ -51,6 +53,19 @@ class wb16_seq_item extends uvm_sequence_item;
 		super.new(name);
 	endfunction
 
+	function bit compare_status( wb16_seq_item trans );
+		bit is_read_status;
+		
+		is_read_status =
+			trans.read && (trans.addr==FIFO_STATUS_REG);
+
+		is_read_status = is_read_status && (
+			this.read && (this.addr==FIFO_STATUS_REG));
+
+		if (is_read_status) return 1;
+		else return compare(trans);
+	endfunction
+
 	virtual function string convert2string();
 		string s;
 		s = $sformatf("\n----------------------------------------");
@@ -58,6 +73,7 @@ class wb16_seq_item extends uvm_sequence_item;
 		s = {s, $sformatf("\nAddress: 0x%0h", addr)};
 		s = {s, $sformatf("\nData:    0x%0h", data)};
 		s = {s, $sformatf("\nType:    %s", read ? "READ" : "WRITE")};
+		s = {s, $sformatf("\nStart Time: %0t", start_time)};
 		s = {s, $sformatf("\n----------------------------------------")};
 		return s;
 	endfunction

@@ -35,10 +35,12 @@ package wb16_bridge_env_pkg;
   // Import required custom packages
 	import i2c_master_wb16_pkg::*;
 	import wb16_i2c_agent_pkg::*;
-	import common_i2c_pkg::i2c_agent;
+	import common_i2c_pkg::*;
 	import wb16_agent_pkg::*;
+	import common_utils_pkg::*;
 
   // Include environment components
+  `include "wb16_ref_model.sv"
   `include "wb16_scoreboard.sv"
   `include "wb16_coverage.sv"
   `include "wb16_bridge_env.sv"

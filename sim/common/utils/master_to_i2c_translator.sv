@@ -34,13 +34,20 @@ class master_to_i2c_translator extends uvm_component;
     // STOP: Transaction complete, ready for delivery
     typedef enum {
         IDLE,
-        START,
-        ADDR_PHASE,
+        // START,
+        // ADDR_PHASE,
         READ_PHASE,
         WRITE_PHASE,
         STOP,
 		COMPLETE
     } build_state_t;
+
+    typedef enum {
+        START,
+        ADDR,
+        DIR
+    } init_check_dict;
+    bit [3-1:0] init_checklist = 0;
 
     //--------------------------------------------------------------------------
     // Class Properties
@@ -69,57 +76,77 @@ class master_to_i2c_translator extends uvm_component;
     // Retrieves the completed transaction and merges in slave response data
     // for read transactions. The transaction is marked incomplete after retrieval.
     function i2c_transaction get_transaction(i2c_transaction slave_tr);
-        assert(current_state==COMPLETE)
-        else `uvm_fatal(get_type_name(),
-            "Transaction is not complete!")
+        if (!is_ready()) begin
+            `uvm_error(get_type_name(), "Transaction is not complete!")
+            return null;
+        end
 
-        // For read transactions, copy response data from slave
-        // and truncate to expected length if necessary
+        // For read transactions, copy response data and truncate if necessary
         if (!current_tr.is_write) begin
             current_tr.payload_data = slave_tr.payload_data;
-
             while (current_tr.payload_data.size() > read_data_length) begin
                 current_tr.payload_data.pop_back();
             end
         end
 
+        // Reset state
         current_state = IDLE;
+        init_checklist = 3'b0;
         return current_tr;
     endfunction
+
 
     //--------------------------------------------------------------------------
     // Transaction control methods
     //--------------------------------------------------------------------------
+    function void init_valid_check();
+        if (init_checklist == 3'b111) begin
+            if (current_tr.is_write) begin
+                current_state = WRITE_PHASE;
+            end else begin
+                current_state = READ_PHASE;
+            end
+        end else begin
+            `uvm_info(get_type_name(), "init_valid_check not complete.", UVM_DEBUG)
+        end
+    endfunction
+
 
     // Initializes a new transaction when START bit is received
     // Must be called in IDLE state as repeated start is not yet supported
     function void add_start_bit();
-        assert(current_state==IDLE)
+        assert(!init_checklist[START] && current_state == IDLE)
         else
             `uvm_fatal(get_type_name(),
                 {"state=", current_state.name(),
-                " Ref model has not implemented repeated start!"})
+                " Add start bit error"})
 
-        current_tr = i2c_transaction::type_id::create("trans");
-        current_state = START;
+        init_checklist[START] = 1'b1;
+
+        // current_tr = i2c_transaction::type_id::create("trans");
+        
+        // change state if init checklist is complete
+        init_valid_check();
     endfunction
 
     // Finalizes transaction when STOP command is received explicitly
     // Validates that transaction has actual data/expected reads
     function void add_stop_bit();
         assert(current_state inside {READ_PHASE, WRITE_PHASE, IDLE})
-        else `uvm_fatal(get_type_name(), {"state=",current_state.name(),
-            " Not in the state for add_stop_bit!"})
+        else `uvm_fatal(get_type_name(), 
+                    {"state=", current_state.name(),
+                        " Not in the state for add_stop_bit!"})
 
+        // Check that transaction is not empty
         assert((read_data_length > 0) || (current_tr.payload_data.size > 0))
         else `uvm_fatal(get_type_name(), "Transaction is empty!")
 
-		if (current_state inside {READ_PHASE, WRITE_PHASE})
-        	current_state = COMPLETE;
-
-		// covers stop command when nothing is going on
-		else
-			current_state = IDLE;
+        if (current_state == READ_PHASE || current_state == WRITE_PHASE) begin
+            current_state = COMPLETE;
+        end else begin
+            current_state = IDLE;
+            init_checklist = 3'b0;
+        end
     endfunction
 
     //--------------------------------------------------------------------------
@@ -129,33 +156,41 @@ class master_to_i2c_translator extends uvm_component;
     // Records slave address after START
     // Must be called before setting direction
     function void add_slave_addr(bit [6:0] slave_addr);
-        assert(current_state==START)
-        else `uvm_fatal(get_type_name(),
-            "add_slave_addr was called before add_start_bit!")
+		assert(!init_checklist[1] && current_state == IDLE)
+        else `uvm_fatal(get_type_name(),$sformatf(
+            "Add slave address error, initcheck : %b current_state : %d", init_checklist, current_state))
 
-        current_state = ADDR_PHASE;
+		init_checklist[1] = 1'b1;
+		
+        // current_state = ADDR_PHASE;
         current_tr.slave_addr = slave_addr;
+		
+        // change state if init checklist is complete
+        init_valid_check();
     endfunction
 
     // Sets transaction direction (read/write) and prepares for data phase
     // For writes: Initializes empty payload array
     // For reads: Initializes read length counter
     function void add_direction(bit is_write);
-        assert(current_state==ADDR_PHASE)
+        assert(!init_checklist[DIR] && current_state == IDLE)
         else `uvm_fatal(get_type_name(),
             {"state=",current_state.name(),
-            " add_direction was called before add_slave_addr!"})
+            "Add r/w direction error"})
+
+        init_checklist[DIR] = 1'b1;
 
         current_tr.is_write = is_write;
 
         if (current_tr.is_write) begin
-            current_state = WRITE_PHASE;
             current_tr.payload_data = {};
         end
         else begin
-            current_state = READ_PHASE;
             read_data_length = 0;
         end
+
+        // change state if init checklist is complete
+        init_valid_check();
     endfunction
 
     //--------------------------------------------------------------------------
@@ -192,6 +227,7 @@ class master_to_i2c_translator extends uvm_component;
     // Constructor
     function new(string name="master_to_i2c_translator", uvm_component parent);
         super.new(name, parent);
+        current_tr = i2c_transaction::type_id::create("trans");
     endfunction
 
 endclass
