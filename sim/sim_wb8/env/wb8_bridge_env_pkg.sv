@@ -35,11 +35,12 @@ package wb8_bridge_env_pkg;
   // Import required custom packages
 	import i2c_master_wb8_pkg::*;
 	import wb8_i2c_agent_pkg::*;
-	import common_i2c_pkg::i2c_agent;
+	import common_i2c_pkg::*;
 	import wb8_agent_pkg::*;
+	import common_utils_pkg::*;
 
   // Include environment components
-  `include "wb8_scoreboard.sv"
+  `include "wb8_ref_model.sv"
   `include "wb8_coverage.sv"
   `include "wb8_bridge_env.sv"
 

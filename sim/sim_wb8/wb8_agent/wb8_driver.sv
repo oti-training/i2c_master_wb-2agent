@@ -29,6 +29,8 @@ class wb8_driver extends uvm_driver #(wb8_seq_item);
     
     `uvm_component_utils(wb8_driver)
 
+    uvm_analysis_port#(wb8_seq_item) drv2rm_port;
+
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -38,12 +40,21 @@ class wb8_driver extends uvm_driver #(wb8_seq_item);
         if(!uvm_config_db#(virtual wb8_if)::get(this, "", "wb8_vif", vif)) begin
             `uvm_fatal("NOVIF", $sformatf("Virtual interface not found for %s", get_full_name()))
         end
+        drv2rm_port = new("drv2rm_port", this);
     endfunction
 
     task run_phase(uvm_phase phase);
         forever begin
+			wb8_seq_item to_rm;
+			
+			// receive from sequencer
             seq_item_port.get_next_item(req);
-            drive_transaction(req);
+            drive_transaction();
+			// send out to reference model
+			$cast(to_rm,req.clone());
+			to_rm.start_time = $time;
+			drv2rm_port.write(to_rm);
+			// return to sequencer
 			$cast(rsp,req.clone());
 			rsp.set_id_info(req);
             seq_item_port.item_done();
@@ -51,7 +62,7 @@ class wb8_driver extends uvm_driver #(wb8_seq_item);
         end
     endtask
 
-    task drive_transaction(wb8_seq_item req);
+    task drive_transaction();
         // counter for stall error mitigation
         int wait_retry;
         // TODO: Add proper reset handling here

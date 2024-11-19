@@ -153,8 +153,7 @@ class master_to_i2c_translator extends uvm_component;
     // Address phase methods
     //--------------------------------------------------------------------------
 
-    // Records slave address after START
-    // Must be called before setting direction
+    // Records slave address
     function void add_slave_addr(bit [6:0] slave_addr);
 		assert(!init_checklist[1] && current_state == IDLE)
         else `uvm_fatal(get_type_name(),$sformatf(
@@ -180,6 +179,8 @@ class master_to_i2c_translator extends uvm_component;
 
         init_checklist[DIR] = 1'b1;
 
+        // check the list ✅😉 
+        init_checklist[DIR] = 1'b1;
         current_tr.is_write = is_write;
 
         if (current_tr.is_write) begin

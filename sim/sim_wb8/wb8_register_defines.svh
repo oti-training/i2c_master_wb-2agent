@@ -20,12 +20,12 @@
 `define REG_DEFINES
 
 // Register address map
-typedef enum bit [3:0] {
-	FIFO_STATUS_REG   = 4'h1, // Status register address
-	SLAVE_REG	 = 3'h2,
-	CMD_REG      = 3'h3, // Command register address
-	DATA_REG     = 3'h4, // Data register address
-	PRESCALE_REG = 3'h6  // Prescaler register address
+typedef enum bit [2:0] {
+	FIFO_STATUS_REG   	= 3'h1, // Status register address
+	SLAVE_REG	 		= 3'h2,
+	CMD_REG      		= 3'h3, // Command register address
+	DATA_REG     		= 3'h4, // Data register address
+	PRESCALE_REG 		= 3'h6  // Prescaler register address
 } reg_addr_t;
 
 // Control register structure

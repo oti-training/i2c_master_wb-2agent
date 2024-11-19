@@ -34,7 +34,7 @@ class wb8_bus_seq extends uvm_sequence #(wb8_seq_item);
 		req.cfg_address = DATA_REG;
 		// req.cfg_data[9:8] = flags;
 		start(sequencer);
-		`uvm_info(get_type_name(), $sformatf("Write data register request %s", req.convert2string()), UVM_LOW)
+		`uvm_info(get_type_name(), $sformatf("Write data register request %s", req.convert2string()), UVM_HIGH)
 	endtask
 
 	// write to command register
@@ -69,7 +69,7 @@ class wb8_bus_seq extends uvm_sequence #(wb8_seq_item);
 		// read data
 		req.cfg_address = DATA_REG;
 		start(sequencer);
-		`uvm_info(get_type_name(), $sformatf("Read data register response %s", rsp.convert2string()), UVM_LOW)
+		`uvm_info(get_type_name(), $sformatf("Read data register response %s", rsp.convert2string()), UVM_HIGH)
 		end
 	endtask
 

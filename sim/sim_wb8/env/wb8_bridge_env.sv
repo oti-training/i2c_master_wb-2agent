@@ -26,10 +26,11 @@ class wb8_bridge_env extends uvm_env;
     wb8_monitor   wb8_mon;
     wb8_i2c_monitor    i2c_mon;
     uvm_sequencer #(wb8_seq_item) wb8_seqr;
-    wb8_scoreboard scbd;
+    scoreboard #(wb8_seq_item) scbd;
     wb8_coverage cov;
 
-	i2c_agent i2c_agent_instance;
+	wb8_ref_model ref_model;
+	i2c_agent i2c_agnt;
 
     // Constructor
     function new(string name = "wb8_bridge_env", uvm_component parent = null);
@@ -45,10 +46,11 @@ class wb8_bridge_env extends uvm_env;
         wb8_mon = wb8_monitor::type_id::create("wb8_mon", this);
         i2c_mon = wb8_i2c_monitor::type_id::create("i2c_mon", this);
         wb8_seqr = uvm_sequencer#(wb8_seq_item)::type_id::create("wb8_seqr", this);
-        scbd = wb8_scoreboard::type_id::create("scbd", this);
         cov = wb8_coverage::type_id::create("cov", this);
 
-		i2c_agent_instance = i2c_agent::type_id::create("i2c_agent", this);
+		ref_model = wb8_ref_model::type_id::create("ref_model", this);
+        scbd = scoreboard#(wb8_seq_item)::type_id::create("scbd", this);
+		i2c_agnt = i2c_agent::type_id::create("i2c_agent", this);
     endfunction
     
     // Connect phase: Establish connections between components
@@ -58,9 +60,17 @@ class wb8_bridge_env extends uvm_env;
         // Connect sequencer to driver
         wb8_drv.seq_item_port.connect(wb8_seqr.seq_item_export);
 
+		// Connect drivers to reference model
+		wb8_drv.drv2rm_port.connect(ref_model.wb8_imp);
+		i2c_agnt.driver.drv2rm_port.connect(ref_model.i2c_imp);
+
+		// Connect reference model to scoreboard
+		ref_model.wb8_rm2sb_port.connect(scbd.master_exp_imp);
+		ref_model.i2c_rm2sb_port.connect(scbd.i2c_exp_imp);
+
         // Connect monitors to scoreboard
-        wb8_mon.ap.connect(scbd.wb8_export);
-        i2c_mon.ap.connect(scbd.i2c_export);
+        wb8_mon.ap.connect(scbd.master_act_imp);
+        i2c_agnt.monitor.mon2sb.connect(scbd.i2c_act_imp);
 
         // Connect AXI-Lite monitor to coverage collector
         wb8_mon.ap.connect(cov.analysis_export);
